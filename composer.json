@@ -1,0 +1,27 @@
+{
+    "name": "syntexa/framework",
+    "description": "A modern PHP framework with proper separation of concerns and runtime module loading",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Taras",
+            "email": "taras@example.com"
+        }
+    ],
+    "require": {
+        "php": "^8.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "Syntexa\\Core\\": "vendor/syntexa/core/",
+            "Syntexa\\Api\\": "vendor/syntexa/api/",
+            "Syntexa\\Orm\\": "vendor/syntexa/orm/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
