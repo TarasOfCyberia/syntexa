@@ -1,0 +1,26 @@
+{
+    "name": "syntexa/module-user",
+    "description": "User management module for Syntexa Framework",
+    "type": "syntexa-module",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Taras",
+            "email": "taras@example.com"
+        }
+    ],
+    "require": {
+        "php": "^8.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "Syntexa\\UserModule\\": "src/"
+        }
+    },
+    "extra": {
+        "syntexa-module": {
+            "name": "user",
+            "description": "User management functionality"
+        }
+    }
+}

@@ -1,8 +1,10 @@
 <?php
 
-namespace Syntexa\User\Interface\HttpResponse;
+namespace Syntexa\User\Application\HttpResponse;
 
-class LoginFormResponse
+use Syntexa\Core\Contract\ResponseInterface;
+
+class LoginFormResponse implements ResponseInterface
 {
 
 }
