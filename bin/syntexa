@@ -6,37 +6,28 @@ declare(strict_types=1);
 /**
  * Syntexa Framework - Startup Script
  * 
- * This script starts the Syntexa framework in the appropriate mode:
- * - Swoole mode if Swoole extension is available
- * - Traditional PHP mode if Swoole is not available
+ * This script starts the Syntexa framework in Swoole mode only.
  */
 
 echo "🚀 Starting Syntexa Framework...\n";
 
 // Check if Swoole is available
-if (extension_loaded('swoole')) {
-    echo "✅ Swoole extension found\n";
-    echo "🔄 Starting in Swoole mode...\n";
-    echo "🌐 Server will be available at: http://localhost:9501\n";
-    
-    // Start Swoole server
-    $serverScript = __DIR__ . '/../server.php';
-    if (file_exists($serverScript)) {
-        require $serverScript;
-    } else {
-        echo "❌ Error: server.php not found\n";
-        exit(1);
-    }
+if (!extension_loaded('swoole')) {
+    echo "❌ Swoole extension not found\n";
+    echo "Syntexa runs only under Swoole.\n";
+    echo "Install Swoole: https://www.swoole.co.uk/docs/get-started/installation\n";
+    exit(1);
+}
+
+echo "✅ Swoole extension found\n";
+echo "🔄 Starting in Swoole mode...\n";
+echo "🌐 Server will be available at: http://localhost:9501\n";
+
+// Start Swoole server
+$serverScript = __DIR__ . '/../server.php';
+if (file_exists($serverScript)) {
+    require $serverScript;
 } else {
-    echo "⚠️  Swoole extension not found\n";
-    echo "🔄 Starting in traditional PHP mode...\n";
-    echo "🌐 Server will be available at: http://localhost:8000\n";
-    echo "📝 Or configure your web server to point to: " . __DIR__ . "/../public\n";
-    
-    // Start PHP built-in server
-    $publicDir = __DIR__ . '/../public';
-    $command = "php -S localhost:8000 -t " . escapeshellarg($publicDir);
-    
-    echo "Running: $command\n";
-    passthru($command);
+    echo "❌ Error: server.php not found\n";
+    exit(1);
 }

@@ -10,7 +10,7 @@ namespace Syntexa\Core;
 class RequestFactory
 {
     /**
-     * Create Request from any source (auto-detection)
+     * Create Request (Swoole-only)
      */
     public static function create(mixed $source = null): Request
     {
@@ -18,25 +18,10 @@ class RequestFactory
             return self::fromSwoole($source);
         }
         
-        return self::fromGlobals();
+        throw new \InvalidArgumentException('RequestFactory::create requires a Swoole\\Http\\Request in Swoole-only mode');
     }
     
-    /**
-     * Create Request from PHP globals
-     */
-    public static function fromGlobals(): Request
-    {
-        return new Request(
-            method: $_SERVER['REQUEST_METHOD'] ?? 'GET',
-            uri: $_SERVER['REQUEST_URI'] ?? '/',
-            headers: self::getHeaders(),
-            query: $_GET,
-            post: $_POST,
-            server: $_SERVER,
-            cookies: $_COOKIE,
-            content: file_get_contents('php://input') ?: null
-        );
-    }
+    // fromGlobals removed in Swoole-only mode
     
     /**
      * Create Request from Swoole request object

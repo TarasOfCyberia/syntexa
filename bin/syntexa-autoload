@@ -1,0 +1,54 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Syntexa Autoloader Generator
+ * 
+ * This script automatically generates PSR-4 mappings for:
+ * - vendor/syntexa/* packages
+ * - src/modules/* directories  
+ * - src/packages/* directories
+ * - vendor/* packages with type: "syntexa-module"
+ */
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use Syntexa\Core\AutoloaderGenerator;
+
+echo "🚀 Syntexa Autoloader Generator\n";
+echo "================================\n\n";
+
+try {
+    // Generate mappings
+    echo "🔍 Scanning for packages and modules...\n";
+    $mappings = AutoloaderGenerator::generate();
+    
+    echo "📦 Found " . count($mappings) . " PSR-4 mappings:\n";
+    foreach ($mappings as $namespace => $path) {
+        echo "   {$namespace} => {$path}\n";
+    }
+    
+    echo "\n";
+    
+    // Update composer.json
+    echo "📝 Updating composer.json...\n";
+    AutoloaderGenerator::updateComposerJson();
+    
+    echo "\n";
+    
+    // Regenerate autoloader
+    echo "🔄 Regenerating autoloader...\n";
+    $output = shell_exec('cd ' . __DIR__ . '/.. && composer dump-autoload 2>&1');
+    
+    if ($output) {
+        echo $output;
+    }
+    
+    echo "\n✅ Autoloader updated successfully!\n";
+    
+} catch (\Throwable $e) {
+    echo "❌ Error: " . $e->getMessage() . "\n";
+    exit(1);
+}

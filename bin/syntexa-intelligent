@@ -1,0 +1,78 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Syntexa Intelligent Autoloader
+ * 
+ * This script automatically discovers ALL classes in the project
+ * and generates PSR-4 mappings without any manual configuration.
+ */
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use Syntexa\Core\IntelligentAutoloader;
+
+echo "🧠 Syntexa Intelligent Autoloader\n";
+echo "=================================\n\n";
+
+try {
+    // Initialize intelligent autoloader
+    echo "🔍 Discovering all classes...\n";
+    IntelligentAutoloader::initialize();
+    
+    // Show discovered classes
+    $classMap = IntelligentAutoloader::getClassMap();
+    echo "\n📦 Discovered " . count($classMap) . " classes:\n";
+    
+    foreach ($classMap as $className => $filePath) {
+        $relativePath = str_replace(__DIR__ . '/../', '', $filePath);
+        echo "   {$className} => {$relativePath}\n";
+    }
+    
+    // Show namespaces
+    $namespaces = IntelligentAutoloader::getNamespaces();
+    echo "\n🏷️  Found " . count($namespaces) . " namespaces:\n";
+    
+    foreach ($namespaces as $namespace) {
+        echo "   {$namespace}\n";
+    }
+    
+    // Generate PSR-4 mappings
+    echo "\n🔧 Generating PSR-4 mappings...\n";
+    $mappings = IntelligentAutoloader::generatePsr4Mappings();
+    
+    echo "📝 Generated " . count($mappings) . " PSR-4 mappings:\n";
+    foreach ($mappings as $namespace => $path) {
+        echo "   {$namespace} => {$path}\n";
+    }
+    
+    // Update composer.json
+    echo "\n📝 Updating composer.json...\n";
+    $composerJsonPath = __DIR__ . '/../composer.json';
+    $composer = json_decode(file_get_contents($composerJsonPath), true);
+    
+    $composer['autoload']['psr-4'] = $mappings;
+    
+    file_put_contents(
+        $composerJsonPath,
+        json_encode($composer, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+    );
+    
+    echo "✅ Updated composer.json\n";
+    
+    // Regenerate autoloader
+    echo "\n🔄 Regenerating autoloader...\n";
+    $output = shell_exec('cd ' . __DIR__ . '/.. && composer dump-autoload 2>&1');
+    
+    if ($output) {
+        echo $output;
+    }
+    
+    echo "\n✅ Intelligent autoloader setup complete!\n";
+    
+} catch (\Throwable $e) {
+    echo "❌ Error: " . $e->getMessage() . "\n";
+    exit(1);
+}

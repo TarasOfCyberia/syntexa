@@ -4,16 +4,128 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1ca29d45fb14df82ed9774af644f6771",
-    "packages": [],
+    "content-hash": "aa06acdd41ee48013bd421d2093c2f27",
+    "packages": [
+        {
+            "name": "syntexa/api-module",
+            "version": "dev-master",
+            "dist": {
+                "type": "path",
+                "url": "./packages/api-module",
+                "reference": "27d6c69a27dcc244b85e71004edc6e0f212926f0"
+            },
+            "require": {
+                "php": "^8.4"
+            },
+            "type": "syntexa-module",
+            "extra": {
+                "syntexa-module": {
+                    "name": "api",
+                    "description": "API utilities and helpers"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Syntexa\\ApiModule\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Taras",
+                    "email": "taras@example.com"
+                }
+            ],
+            "description": "API utilities module for Syntexa Framework",
+            "transport-options": {
+                "relative": true
+            }
+        },
+        {
+            "name": "syntexa/auth-module",
+            "version": "dev-master",
+            "dist": {
+                "type": "path",
+                "url": "./packages/auth-module",
+                "reference": "929ba31ea4c2da89e623d0b8c712430322dba098"
+            },
+            "require": {
+                "php": "^8.4"
+            },
+            "type": "syntexa-module",
+            "extra": {
+                "syntexa-module": {
+                    "name": "auth",
+                    "description": "Authentication functionality"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Syntexa\\AuthModule\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Taras",
+                    "email": "taras@example.com"
+                }
+            ],
+            "description": "Authentication module for Syntexa Framework",
+            "transport-options": {
+                "relative": true
+            }
+        },
+        {
+            "name": "syntexa/user-module",
+            "version": "dev-master",
+            "dist": {
+                "type": "path",
+                "url": "./packages/user-module",
+                "reference": "47ddedee45d9a03a4861974c2ae1c8b80e0a4eae"
+            },
+            "require": {
+                "php": "^8.4"
+            },
+            "type": "syntexa-module",
+            "extra": {
+                "syntexa-module": {
+                    "name": "user",
+                    "description": "User management functionality"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Syntexa\\UserModule\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Taras",
+                    "email": "taras@example.com"
+                }
+            ],
+            "description": "User management module for Syntexa Framework",
+            "transport-options": {
+                "relative": true
+            }
+        }
+    ],
     "packages-dev": [],
     "aliases": [],
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
     "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": "^8.2"
+        "php": "^8.4"
     },
     "platform-dev": {},
     "plugin-api-version": "2.6.0"

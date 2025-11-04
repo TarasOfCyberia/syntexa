@@ -5,23 +5,31 @@
     "license": "MIT",
     "authors": [
         {
-            "name": "Taras",
-            "email": "taras@example.com"
+            "name": "Taras Hanych",
+            "email": "taras.ganych@gmail.com"
+        }
+    ],
+    "repositories": [
+        {
+            "type": "path",
+            "url": "./packages/*"
         }
     ],
     "require": {
-        "php": "^8.2"
+        "php": "^8.4",
+        "syntexa/syntexa-module-user": "*",
+        "syntexa/syntexa-module-auth": "*",
+        "syntexa/syntexa-module-api": "*"
     },
     "autoload": {
         "psr-4": {
-            "Syntexa\\Core\\": "vendor/syntexa/core/",
-            "Syntexa\\Api\\": "vendor/syntexa/api/",
-            "Syntexa\\Orm\\": "vendor/syntexa/orm/"
+            "Syntexa\\Core\\": "vendor/syntexa/core/src/",
+            "Syntexa\\Modules\\": "src/modules/"
         }
     },
     "config": {
         "sort-packages": true
     },
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
     "prefer-stable": true
 }

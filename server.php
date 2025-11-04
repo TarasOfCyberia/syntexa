@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+echo "Starting Syntexa server...\n";
+
 use Swoole\Http\Server;
 use Syntexa\Core\Application;
 use Syntexa\Core\ErrorHandler;
@@ -13,7 +15,9 @@ use Syntexa\Core\Request;
  */
 
 // Load Composer autoloader
+echo "Loading autoloader...\n";
 require_once __DIR__ . '/vendor/autoload.php';
+echo "Autoloader loaded\n";
 
 // Check if Swoole is available
 if (!extension_loaded('swoole')) {
@@ -21,14 +25,21 @@ if (!extension_loaded('swoole')) {
 }
 
 // Create application to get environment
+echo "Creating application...\n";
 $app = new Application();
+echo "Application created\n";
 $env = $app->getEnvironment();
+echo "Environment loaded\n";
 
 // Configure error handling
+echo "Configuring error handling...\n";
 ErrorHandler::configure($env);
+echo "Error handling configured\n";
 
 // Create Swoole HTTP server with environment configuration
+echo "Creating Swoole server on {$env->swooleHost}:{$env->swoolePort}...\n";
 $server = new Server($env->swooleHost, $env->swoolePort);
+echo "Swoole server created\n";
 
 // Server configuration from environment
 $server->set([

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Syntexa\Core;
 
+use Syntexa\Core\Discovery\AttributeDiscovery;
+
 /**
  * Minimal Syntexa Application
  */
@@ -23,14 +25,49 @@ class Application
     
     public function handleRequest(Request $request): Response
     {
-        // Simple routing
-        $path = $request->getPath();
+        // Initialize attribute discovery
+        AttributeDiscovery::initialize();
         
+        // Try to find route using AttributeDiscovery
+        $route = AttributeDiscovery::findRoute($request->getPath(), $request->getMethod());
+        
+        if ($route) {
+            return $this->handleRoute($route, $request);
+        }
+        
+        // Fallback to simple routing
+        $path = $request->getPath();
         if ($path === '/' || $path === '') {
             return $this->helloWorld($request);
         }
-        
+
         return $this->notFound($request);
+    }
+    
+    private function handleRoute(array $route, Request $request): Response
+    {
+        try {
+            // Create controller instance
+            $controller = new $route['class']();
+            
+            // Call the method
+            $method = $route['method'];
+            
+            if ($method === '__invoke') {
+                // Single action controller
+                $response = $controller();
+            } else {
+                // Multi-action controller
+                $response = $controller->$method();
+            }
+            
+            return $response;
+        } catch (\Throwable $e) {
+            return Response::json([
+                'error' => 'Internal Server Error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
     
     private function helloWorld(Request $request): Response
@@ -51,29 +88,7 @@ class Application
     
     private function detectRuntimeMode(Request $request): string
     {
-        // Check if running in Swoole server
-        if (extension_loaded('swoole') && $request->getServer('SWOOLE_SERVER') === '1') {
-            return 'swoole';
-        }
-        
-        // Check if running in traditional PHP-FPM
-        $serverSoftware = $request->getServer('SERVER_SOFTWARE');
-        if ($serverSoftware && (str_contains($serverSoftware, 'nginx') || str_contains($serverSoftware, 'apache'))) {
-            return 'php-fpm';
-        }
-        
-        // Check if running in PHP built-in server
-        if ($serverSoftware && str_contains($serverSoftware, 'PHP')) {
-            return 'php-builtin';
-        }
-        
-        // Check if Swoole extension is available but not used
-        if (extension_loaded('swoole')) {
-            return 'php-builtin-with-swoole';
-        }
-        
-        // Default fallback
-        return 'unknown';
+        return 'swoole';
     }
     
     private function notFound(Request $request): Response
