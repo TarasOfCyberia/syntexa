@@ -13,7 +13,7 @@ use Attribute;
  * and defines the route path, methods, and other options.
  */
 #[Attribute(Attribute::TARGET_CLASS)]
-class AsController
+class AsHttpRequest
 {
     public function __construct(
         public string $path,
@@ -23,6 +23,7 @@ class AsController
         public array $defaults = [],
         public array $options = [],
         public array $tags = [],
-        public bool $public = true
+        public bool $public = true,
+        public string $responseWith = '',
     ) {}
 }

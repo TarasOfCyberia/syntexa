@@ -12,14 +12,14 @@
     "repositories": [
         {
             "type": "path",
-            "url": "./packages/*"
+            "url": "./packages/syntexa/*"
         }
     ],
     "require": {
         "php": "^8.4",
-        "syntexa/syntexa-module-user": "*",
-        "syntexa/syntexa-module-auth": "*",
-        "syntexa/syntexa-module-api": "*"
+        "syntexa/module-user": "*",
+        "syntexa/module-auth": "*",
+        "syntexa/module-api": "*"
     },
     "autoload": {
         "psr-4": {

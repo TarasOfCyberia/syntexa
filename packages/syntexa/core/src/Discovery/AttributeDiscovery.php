@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Syntexa\Core\Discovery;
 
 use Syntexa\Core\Attributes\AsController;
-use Syntexa\Core\Attributes\Route;
 use Syntexa\Core\ModuleRegistry;
 use Syntexa\Core\IntelligentAutoloader;
 use ReflectionClass;
@@ -228,23 +227,7 @@ class AttributeDiscovery
      */
     private static function analyzeMethods(ReflectionClass $class): void
     {
-        foreach ($class->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
-            $routeAttributes = $method->getAttributes(Route::class);
-            
-            foreach ($routeAttributes as $routeAttr) {
-                $route = $routeAttr->newInstance();
-                
-                self::$routes[] = [
-                    'path' => $route->path,
-                    'methods' => $route->methods,
-                    'name' => $route->name ?? $method->getName(),
-                    'class' => $class->getName(),
-                    'method' => $method->getName(),
-                    'requirements' => $route->requirements,
-                    'defaults' => $route->defaults,
-                    'options' => $route->options
-                ];
-            }
-        }
+        // Legacy per-method routes via Route attribute are no longer supported.
+        // Keep the method for backward compatibility without doing anything.
     }
 }
