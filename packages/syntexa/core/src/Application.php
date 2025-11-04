@@ -31,6 +31,12 @@ class Application
         // Try to find route using AttributeDiscovery
         $route = AttributeDiscovery::findRoute($request->getPath(), $request->getMethod());
         
+        if (!$route) {
+            echo "⚠️  No route found for: {$request->getPath()} ({$request->getMethod()})\n";
+        } else {
+            echo "✅ Found route: {$route['path']} -> {$route['class']}\n";
+        }
+        
         if ($route) {
             return $this->handleRoute($route, $request);
         }
@@ -47,22 +53,62 @@ class Application
     private function handleRoute(array $route, Request $request): Response
     {
         try {
-            // Create controller instance
-            $controller = new $route['class']();
-            
-            // Call the method
-            $method = $route['method'];
-            
-            if ($method === '__invoke') {
-                // Single action controller
-                $response = $controller();
-            } else {
-                // Multi-action controller
-                $response = $controller->$method();
+            // HTTP Request/Handler flow
+            if (($route['type'] ?? null) === 'http-request') {
+                echo "🔄 Processing http-request route\n";
+                $requestClass = $route['class'];
+                $responseClass = $route['responseClass'] ?? null;
+                $handlerClasses = $route['handlers'] ?? [];
+
+                echo "📦 Request class: {$requestClass}\n";
+                echo "📦 Response class: " . ($responseClass ?? 'null') . "\n";
+                echo "📦 Handlers: " . count($handlerClasses) . "\n";
+
+                // Instantiate DTOs
+                $reqDto = class_exists($requestClass) ? new $requestClass() : null;
+                if (!$reqDto) {
+                    throw new \RuntimeException("Cannot instantiate request class: {$requestClass}");
+                }
+                $resDto = ($responseClass && class_exists($responseClass)) ? new $responseClass() : null;
+
+                // Fallback generic response if none supplied
+                if ($resDto === null) {
+                    echo "⚠️  Using fallback GenericResponse\n";
+                    $resDto = new \Syntexa\Core\Http\Response\GenericResponse();
+                }
+
+                // Execute handlers in order
+                foreach ($handlerClasses as $handlerClass) {
+                    echo "🔄 Executing handler: {$handlerClass}\n";
+                    if (!class_exists($handlerClass)) {
+                        echo "⚠️  Handler class not found: {$handlerClass}\n";
+                        continue;
+                    }
+                    $handler = new $handlerClass();
+                    if (method_exists($handler, 'handle')) {
+                        $resDto = $handler->handle($reqDto, $resDto);
+                        echo "✅ Handler executed: {$handlerClass}\n";
+                    }
+                }
+
+                // Adapt to core Response
+                if (method_exists($resDto, 'toCoreResponse')) {
+                    echo "✅ Converting to Core Response\n";
+                    return $resDto->toCoreResponse();
+                }
+                // Generic fallback
+                echo "⚠️  Using generic JSON fallback\n";
+                return Response::json(['ok' => true]);
             }
-            
+
+            // Legacy controller flow
+            $controller = new $route['class']();
+            $method = $route['method'];
+            $response = $method === '__invoke' ? $controller() : $controller->$method();
             return $response;
         } catch (\Throwable $e) {
+            echo "❌ Error in handleRoute: " . $e->getMessage() . "\n";
+            echo "Stack trace:\n" . $e->getTraceAsString() . "\n";
             return Response::json([
                 'error' => 'Internal Server Error',
                 'message' => $e->getMessage()

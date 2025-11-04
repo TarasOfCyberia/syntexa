@@ -63,44 +63,90 @@ $server->on("start", function ($server) use ($env) {
 });
 
 $server->on("request", function ($request, $response) use ($env) {
-    // Set CORS headers from environment
-    $response->header("Access-Control-Allow-Origin", $env->corsAllowOrigin);
-    $response->header("Access-Control-Allow-Methods", $env->corsAllowMethods);
-    $response->header("Access-Control-Allow-Headers", $env->corsAllowHeaders);
+    $path = $request->server['request_uri'] ?? '/';
+    $method = $request->server['request_method'] ?? 'GET';
     
-    if ($env->corsAllowCredentials) {
-        $response->header("Access-Control-Allow-Credentials", "true");
+    // Ensure response is always sent
+    $responseSent = false;
+    
+    try {
+        echo "📥 Incoming request: {$method} {$path}\n";
+        // Set CORS headers from environment
+        $response->header("Access-Control-Allow-Origin", $env->corsAllowOrigin);
+        $response->header("Access-Control-Allow-Methods", $env->corsAllowMethods);
+        $response->header("Access-Control-Allow-Headers", $env->corsAllowHeaders);
+        
+        if ($env->corsAllowCredentials) {
+            $response->header("Access-Control-Allow-Credentials", "true");
+        }
+        
+        // Handle preflight requests
+        if ($method === 'OPTIONS') {
+            echo "✈️  OPTIONS preflight request\n";
+            $response->status(200);
+            $response->end();
+            return;
+        }
+        
+        // Content-Type will be set per response type (json/html/file). Do not force here.
+        
+        // Create application
+        $app = new Application();
+        
+        // Create Request object from Swoole request
+        $syntexaRequest = Request::create($request);
+        echo "✅ Created Syntexa Request: {$syntexaRequest->getPath()} ({$syntexaRequest->getMethod()})\n";
+        
+        // Handle request
+        $syntexaResponse = $app->handleRequest($syntexaRequest);
+        echo "✅ Got response: {$syntexaResponse->getStatusCode()}\n";
+        
+        // Set status code
+        $response->status($syntexaResponse->getStatusCode());
+        
+        // Set headers
+        foreach ($syntexaResponse->getHeaders() as $name => $value) {
+            $response->header($name, $value);
+        }
+        
+        // Output response
+        $content = $syntexaResponse->getContent();
+        echo "📤 Sending response: " . strlen($content) . " bytes\n";
+        $response->end($content);
+        $responseSent = true;
+        echo "✅ Response sent\n";
+    } catch (\Throwable $e) {
+        echo "❌ Error in request handler: " . $e->getMessage() . "\n";
+        echo "Stack trace:\n" . $e->getTraceAsString() . "\n";
+        
+        if (!$responseSent) {
+            try {
+                $response->status(500);
+                $response->header("Content-Type", "application/json");
+                $errorResponse = json_encode([
+                    'error' => 'Internal Server Error',
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
+                $response->end($errorResponse);
+                $responseSent = true;
+            } catch (\Throwable $sendError) {
+                echo "❌ Failed to send error response: " . $sendError->getMessage() . "\n";
+            }
+        }
+    } finally {
+        // Final safety net - ensure response is always sent
+        if (!$responseSent) {
+            try {
+                $response->status(500);
+                $response->header("Content-Type", "text/plain");
+                $response->end("Internal Server Error - No response generated");
+            } catch (\Throwable $e) {
+                // Last resort - silently fail
+            }
+        }
     }
-    
-    // Handle preflight requests
-    if ($request->server['request_method'] === 'OPTIONS') {
-        $response->status(200);
-        $response->end();
-        return;
-    }
-    
-    // Set content type
-    $response->header("Content-Type", "application/json");
-    
-    // Create application
-    $app = new Application();
-    
-    // Create Request object from Swoole request
-    $syntexaRequest = Request::create($request);
-    
-    // Handle request
-    $syntexaResponse = $app->handleRequest($syntexaRequest);
-    
-    // Set status code
-    $response->status($syntexaResponse->getStatusCode());
-    
-    // Set headers
-    foreach ($syntexaResponse->getHeaders() as $name => $value) {
-        $response->header($name, $value);
-    }
-    
-    // Output response
-    $response->end($syntexaResponse->getContent());
 });
 
 // Start the server

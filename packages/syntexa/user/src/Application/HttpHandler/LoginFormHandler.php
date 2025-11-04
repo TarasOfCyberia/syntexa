@@ -19,6 +19,9 @@ class LoginFormHandler implements HttpHandlerInterface
      */
     public function handle(RequestInterface $request, ResponseInterface $response): LoginFormResponse
     {
+        // Minimal HTML to verify end-to-end pipeline
+        $response->setHeader('Content-Type', 'text/html')
+                 ->setContent('<!doctype html><html><head><title>Login</title></head><body><h1>Login</h1><form method="POST" action="/login"><input type="email" name="email" placeholder="Email"/><br/><input type="password" name="password" placeholder="Password"/><br/><button type="submit">Sign in</button></form></body></html>');
         return $response;
     }
 }

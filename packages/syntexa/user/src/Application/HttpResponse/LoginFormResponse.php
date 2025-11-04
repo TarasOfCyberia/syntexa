@@ -2,9 +2,8 @@
 
 namespace Syntexa\User\Application\HttpResponse;
 
-use Syntexa\Core\Contract\ResponseInterface;
+use Syntexa\Core\Http\Response\GenericResponse;
 
-class LoginFormResponse implements ResponseInterface
+class LoginFormResponse extends GenericResponse
 {
-
 }

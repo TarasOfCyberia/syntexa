@@ -1,6 +1,6 @@
 {
-    "name": "syntexa/module-user",
-    "description": "User management module for Syntexa Framework",
+    "name": "syntexa/module-auth",
+    "description": "Authentication module for Syntexa Framework",
     "type": "syntexa-module",
     "license": "MIT",
     "authors": [
@@ -14,13 +14,13 @@
     },
     "autoload": {
         "psr-4": {
-            "Syntexa\\User\\": "src/"
+            "Syntexa\\AuthModule\\": "src/"
         }
     },
     "extra": {
         "syntexa-module": {
-            "name": "user",
-            "description": "User management functionality"
+            "name": "auth",
+            "description": "Authentication functionality"
         }
     }
 }

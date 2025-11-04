@@ -11,4 +11,9 @@ class AsHttpHandler
         private string $for = ''
     ) {
     }
+
+    public function getFor(): string
+    {
+        return $this->for;
+    }
 }
