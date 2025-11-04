@@ -4,6 +4,8 @@ namespace Syntexa\User\Application\HttpHandler;
 
 use Syntexa\Core\Attributes\AsHttpHandler;
 use Syntexa\Core\Handler\HttpHandlerInterface;
+use Syntexa\Core\Contract\RequestInterface;
+use Syntexa\Core\Contract\ResponseInterface;
 use Syntexa\User\Application\HttpRequest\LoginFormRequest;
 use Syntexa\User\Application\HttpResponse\LoginFormResponse;
 
@@ -15,7 +17,7 @@ class LoginFormHandler implements HttpHandlerInterface
      * @param LoginFormResponse $response
      * @return LoginFormResponse
      */
-    public function handle($request, $response): mixed
+    public function handle(RequestInterface $request, ResponseInterface $response): LoginFormResponse
     {
         return $response;
     }
