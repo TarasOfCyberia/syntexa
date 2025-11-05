@@ -172,10 +172,7 @@ class Application
         } catch (\Throwable $e) {
             echo "❌ Error in handleRoute: " . $e->getMessage() . "\n";
             echo "Stack trace:\n" . $e->getTraceAsString() . "\n";
-            return Response::json([
-                'error' => 'Internal Server Error',
-                'message' => $e->getMessage()
-            ], 500);
+            return \Syntexa\Core\Http\ErrorRenderer::render($e, $request);
         }
     }
     
