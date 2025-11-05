@@ -22,11 +22,15 @@
         "syntexa/module-auth": "*",
         "syntexa/module-api": "*"
     },
+  "require-dev": {},
     "autoload": {
         "psr-4": {
             "Syntexa\\Core\\": "vendor/syntexa/core/src/",
             "Syntexa\\Modules\\": "src/modules/"
-        }
+    },
+    "exclude-from-classmap": [
+      "vendor/twig/twig/src/Test/"
+    ]
     },
     "config": {
         "sort-packages": true

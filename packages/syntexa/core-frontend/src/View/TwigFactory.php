@@ -21,7 +21,7 @@ class TwigFactory
         $loader = new FilesystemLoader();
 
         foreach (ModuleRegistry::getModules() as $module) {
-            $templates = $module['path'] . '/templates';
+            $templates = $module['path'] . '/src/Application/View/templates';
             if (is_dir($templates)) {
                 $loader->addPath($templates, $module['name']);
             }

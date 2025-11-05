@@ -2,14 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Syntexa\User\Application\HttpRequest;
+namespace Syntexa\UserFrontend\Application\HttpRequest;
 
 use Syntexa\Core\Attributes\AsHttpRequest;
 use Syntexa\Core\Contract\RequestInterface;
-use Syntexa\User\Application\HttpResponse\LoginFormResponse;
+use Syntexa\UserFrontend\Application\HttpResponse\LoginFormResponse;
 
 #[AsHttpRequest(path: '/login', name: 'login.form', responseWith: LoginFormResponse::class)]
 class LoginFormRequest implements RequestInterface
 {
-
 }
+
+

@@ -71,45 +71,45 @@ $server->on("request", function ($request, $response) use ($env) {
     
     try {
         echo "📥 Incoming request: {$method} {$path}\n";
-        // Set CORS headers from environment
-        $response->header("Access-Control-Allow-Origin", $env->corsAllowOrigin);
-        $response->header("Access-Control-Allow-Methods", $env->corsAllowMethods);
-        $response->header("Access-Control-Allow-Headers", $env->corsAllowHeaders);
-        
-        if ($env->corsAllowCredentials) {
-            $response->header("Access-Control-Allow-Credentials", "true");
-        }
-        
-        // Handle preflight requests
+    // Set CORS headers from environment
+    $response->header("Access-Control-Allow-Origin", $env->corsAllowOrigin);
+    $response->header("Access-Control-Allow-Methods", $env->corsAllowMethods);
+    $response->header("Access-Control-Allow-Headers", $env->corsAllowHeaders);
+    
+    if ($env->corsAllowCredentials) {
+        $response->header("Access-Control-Allow-Credentials", "true");
+    }
+    
+    // Handle preflight requests
         if ($method === 'OPTIONS') {
             echo "✈️  OPTIONS preflight request\n";
-            $response->status(200);
-            $response->end();
-            return;
-        }
-        
+        $response->status(200);
+        $response->end();
+        return;
+    }
+    
         // Content-Type will be set per response type (json/html/file). Do not force here.
-        
-        // Create application
-        $app = new Application();
-        
-        // Create Request object from Swoole request
-        $syntexaRequest = Request::create($request);
+    
+    // Create application
+    $app = new Application();
+    
+    // Create Request object from Swoole request
+    $syntexaRequest = Request::create($request);
         echo "✅ Created Syntexa Request: {$syntexaRequest->getPath()} ({$syntexaRequest->getMethod()})\n";
-        
-        // Handle request
-        $syntexaResponse = $app->handleRequest($syntexaRequest);
+    
+    // Handle request
+    $syntexaResponse = $app->handleRequest($syntexaRequest);
         echo "✅ Got response: {$syntexaResponse->getStatusCode()}\n";
-        
-        // Set status code
-        $response->status($syntexaResponse->getStatusCode());
-        
-        // Set headers
-        foreach ($syntexaResponse->getHeaders() as $name => $value) {
-            $response->header($name, $value);
-        }
-        
-        // Output response
+    
+    // Set status code
+    $response->status($syntexaResponse->getStatusCode());
+    
+    // Set headers
+    foreach ($syntexaResponse->getHeaders() as $name => $value) {
+        $response->header($name, $value);
+    }
+    
+    // Output response
         $content = $syntexaResponse->getContent();
         echo "📤 Sending response: " . strlen($content) . " bytes\n";
         $response->end($content);

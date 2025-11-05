@@ -51,8 +51,7 @@ class IntelligentAutoloader
         // Scan all relevant directories
         $directories = [
             $projectRoot . '/src',
-            $projectRoot . '/vendor/syntexa',
-            $projectRoot . '/vendor' // Only for syntexa-module type packages
+            $projectRoot . '/vendor/syntexa'
         ];
         
         // Also scan packages directory for local development
@@ -105,6 +104,10 @@ class IntelligentAutoloader
             }
             
             $namespace = $namespaceMatches[1];
+            // Limit discovery to our namespaces only to avoid vendor noise
+            if (strpos($namespace, 'Syntexa\\') !== 0) {
+                return;
+            }
             
             // Extract class name
             if (!preg_match('/class\s+(\w+)/', $content, $classMatches)) {
@@ -261,7 +264,7 @@ class IntelligentAutoloader
             'Syntexa\\Core\\AutoloaderGenerator' => 'vendor/syntexa/core/src/AutoloaderGenerator.php',
             'Syntexa\\Core\\IntelligentAutoloader' => 'vendor/syntexa/core/src/IntelligentAutoloader.php',
             'Syntexa\\Core\\Attributes\\AsController' => 'vendor/syntexa/core/src/Attributes/AsController.php',
-            'Syntexa\\Core\\Attributes\\Route' => 'vendor/syntexa/core/src/Attributes/Route.php',
+            
             'Syntexa\\Core\\Discovery\\AttributeDiscovery' => 'vendor/syntexa/core/src/Discovery/AttributeDiscovery.php'
         ];
         

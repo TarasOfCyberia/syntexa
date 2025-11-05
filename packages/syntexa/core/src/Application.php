@@ -134,7 +134,7 @@ class Application
     
     private function detectRuntimeMode(Request $request): string
     {
-        return 'swoole';
+            return 'swoole';
     }
     
     private function notFound(Request $request): Response

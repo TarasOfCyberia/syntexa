@@ -8,8 +8,9 @@ use Syntexa\Core\Attributes\AsHttpHandler;
 use Syntexa\Core\Handler\HttpHandlerInterface;
 use Syntexa\Core\Contract\RequestInterface;
 use Syntexa\Core\Contract\ResponseInterface;
-use Syntexa\User\Application\HttpRequest\LoginFormRequest;
-use Syntexa\User\Application\HttpResponse\LoginFormResponse;
+use Syntexa\UserFrontend\Application\HttpRequest\LoginFormRequest;
+use Syntexa\UserFrontend\Application\HttpResponse\LoginFormResponse;
+use Syntexa\Frontend\Layout\LayoutRenderer;
 
 #[AsHttpHandler(for: LoginFormRequest::class)]
 class LoginFormHandler implements HttpHandlerInterface
@@ -21,9 +22,11 @@ class LoginFormHandler implements HttpHandlerInterface
      */
     public function handle(RequestInterface $request, ResponseInterface $response): LoginFormResponse
     {
-        // Rendering HTML here; could be switched to Twig HtmlResponse later
-        $response->setHeader('Content-Type', 'text/html')
-                 ->setContent('<!doctype html><html><head><title>Login</title></head><body><h1>Login</h1><form method="POST" action="/login"><input type="email" name="email" placeholder="Email"/><br/><input type="password" name="password" placeholder="Password"/><br/><button type="submit">Sign in</button></form></body></html>');
+        /** @var LoginFormResponse $response */
+        $html = LayoutRenderer::renderHandle('login', [
+            'title' => 'Login'
+        ]);
+        $response->setContent($html)->setHeader('Content-Type', 'text/html; charset=UTF-8');
         return $response;
     }
 }

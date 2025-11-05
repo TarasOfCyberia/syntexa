@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<container template="@user-frontend/frame/base.html.twig">
+  <block template="@user-frontend/block/login/form.html.twig">
+    <arg name="title">Login</arg>
+    <arg name="heading">Login</arg>
+  </block>
+  <block template="@user-frontend/block/login/help.html.twig" />
+  
+  <!-- footer region could be another container with its own template -->
+</container>
+
+

@@ -111,7 +111,10 @@ class AttributeDiscovery
     private static function scanAttributesIntelligently(): void
     {
         // Find all classes with AsController attribute (legacy/simple)
-        $controllerClasses = IntelligentAutoloader::findClassesWithAttribute(AsController::class);
+        $controllerClasses = array_filter(
+            IntelligentAutoloader::findClassesWithAttribute(AsController::class),
+            fn ($class) => str_starts_with($class, 'Syntexa\\')
+        );
         
         echo "🧠 Found " . count($controllerClasses) . " controller classes\n";
         
@@ -125,7 +128,10 @@ class AttributeDiscovery
         }
 
         // Find all classes with AsHttpRequest attribute
-        $httpRequestClasses = IntelligentAutoloader::findClassesWithAttribute(AsHttpRequest::class);
+        $httpRequestClasses = array_filter(
+            IntelligentAutoloader::findClassesWithAttribute(AsHttpRequest::class),
+            fn ($class) => str_starts_with($class, 'Syntexa\\')
+        );
         echo "🔍 Found " . count($httpRequestClasses) . " http request classes\n";
         foreach ($httpRequestClasses as $className) {
             try {
@@ -164,7 +170,10 @@ class AttributeDiscovery
         }
 
         // Find handlers and map to requests
-        $httpHandlerClasses = IntelligentAutoloader::findClassesWithAttribute(AsHttpHandler::class);
+        $httpHandlerClasses = array_filter(
+            IntelligentAutoloader::findClassesWithAttribute(AsHttpHandler::class),
+            fn ($class) => str_starts_with($class, 'Syntexa\\')
+        );
         echo "🔍 Found " . count($httpHandlerClasses) . " http handler classes\n";
         foreach ($httpHandlerClasses as $className) {
             try {
