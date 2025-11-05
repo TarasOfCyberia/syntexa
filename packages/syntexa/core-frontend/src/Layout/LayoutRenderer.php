@@ -12,7 +12,10 @@ class LayoutRenderer
     {
         $xml = LayoutLoader::loadHandle($handle);
         if (!$xml) {
-            return '';
+            // Fallback minimal HTML to avoid empty responses
+            return '<!doctype html><html><head><meta charset="utf-8"><title>'
+                . htmlspecialchars($context['title'] ?? 'Layout')
+                . '</title></head><body><main></main></body></html>';
         }
         return self::renderNode($xml, $context);
     }
@@ -21,16 +24,22 @@ class LayoutRenderer
     {
         $name = $node->getName();
         if ($name === 'container') {
-            $output = '';
+            // Collect regions by child container name; concatenate blocks into content
+            $regions = [];
+            $content = '';
             foreach ($node->children() as $child) {
-                $output .= self::renderNode($child, $context);
+                if ($child->getName() === 'container') {
+                    $regionName = (string)($child['name'] ?? 'content');
+                    $regions[$regionName] = ($regions[$regionName] ?? '') . self::renderNode($child, $context);
+                } else {
+                    $content .= self::renderNode($child, $context);
+                }
             }
-            // Optional container template
             $template = (string)($node['template'] ?? '');
             if ($template !== '') {
-                return TwigFactory::get()->render((string)$template, ['content' => $output] + $context);
+                return TwigFactory::get()->render((string)$template, ['content' => $content] + $regions + $context);
             }
-            return $output;
+            return $content;
         }
 
         if ($name === 'block') {

@@ -20,11 +20,38 @@ start() {
   echo "✅ Swoole extension found"
   echo "🔄 Starting in Swoole mode..."
   echo "🌐 Server will be available at: http://localhost:${PORT}"
+  # Prevent duplicate masters: stop if pid file exists and alive
+  PID_FILE="${ROOT_DIR}/var/swoole.pid"
+  if [ -f "${PID_FILE}" ]; then
+    PID=$(cat "${PID_FILE}" || true)
+    if [ -n "${PID}" ] && ps -p "$PID" >/dev/null 2>&1; then
+      echo "⚠️  Existing server detected (pid ${PID}). Stopping it first."
+      kill -TERM "$PID" 2>/dev/null || true
+      sleep 1
+    fi
+    rm -f "${PID_FILE}" 2>/dev/null || true
+  fi
   SWOOLE_PORT="${PORT}" php "${ROOT_DIR}/server.php"
 }
 
 stop() {
   echo "🛑 Stopping Syntexa on port ${PORT}..."
+  PID_FILE="${ROOT_DIR}/var/swoole.pid"
+  if [ -f "${PID_FILE}" ]; then
+    PID=$(cat "${PID_FILE}" || true)
+    if [ -n "${PID}" ] && ps -p "$PID" >/dev/null 2>&1; then
+      echo "Master PID: ${PID}"
+      kill -TERM "$PID" 2>/dev/null || true
+      sleep 1
+      if ps -p "$PID" >/dev/null 2>&1; then
+        kill -9 "$PID" 2>/dev/null || true
+      fi
+    fi
+    rm -f "${PID_FILE}" 2>/dev/null || true
+    echo "Stopped."
+    return 0
+  fi
+  # Fallback to port-based stop
   PIDS=$(ss -ltnp 2>/dev/null | awk -v port=":${PORT}" '$4 ~ port {print $6}' | sed -n 's/.*pid=\([0-9]*\).*/\1/p' | sort -u)
   if [ -z "${PIDS}" ]; then
     echo "No processes found on port ${PORT}."

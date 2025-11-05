@@ -42,6 +42,8 @@ $server = new Server($env->swooleHost, $env->swoolePort);
 echo "Swoole server created\n";
 
 // Server configuration from environment
+$pidFile = __DIR__ . '/var/swoole.pid';
+@mkdir(dirname($pidFile), 0777, true);
 $server->set([
     'worker_num' => $env->swooleWorkerNum,
     'max_request' => $env->swooleMaxRequest,
@@ -49,6 +51,7 @@ $server->set([
     'max_coroutine' => $env->swooleMaxCoroutine,
     'log_file' => $env->swooleLogFile,
     'log_level' => $env->swooleLogLevel,
+    'pid_file' => $pidFile,
 ]);
 
 // Server events
@@ -62,7 +65,7 @@ $server->on("start", function ($server) use ($env) {
     echo "Max Requests: {$env->swooleMaxRequest}\n";
 });
 
-$server->on("request", function ($request, $response) use ($env) {
+$server->on("request", function ($request, $response) use ($env, $app) {
     $path = $request->server['request_uri'] ?? '/';
     $method = $request->server['request_method'] ?? 'GET';
     
@@ -89,9 +92,6 @@ $server->on("request", function ($request, $response) use ($env) {
     }
     
         // Content-Type will be set per response type (json/html/file). Do not force here.
-    
-    // Create application
-    $app = new Application();
     
     // Create Request object from Swoole request
     $syntexaRequest = Request::create($request);

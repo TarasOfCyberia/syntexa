@@ -26,6 +26,9 @@ class LoginFormHandler implements HttpHandlerInterface
         $html = LayoutRenderer::renderHandle('login', [
             'title' => 'Login'
         ]);
+        if ($html === '' || $html === null) {
+            $html = '<!doctype html><html><head><meta charset="utf-8"><title>Login</title></head><body><main><h1>Login</h1></main></body></html>';
+        }
         $response->setContent($html)->setHeader('Content-Type', 'text/html; charset=UTF-8');
         return $response;
     }

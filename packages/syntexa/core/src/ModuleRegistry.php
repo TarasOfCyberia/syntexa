@@ -196,7 +196,7 @@ class ModuleRegistry
     {
         // Filter by composer "type": only accept syntexa-module
         $composerType = self::readComposerType($path);
-        if ($composerType !== 'syntexa-module') {
+        if (!in_array($composerType, ['syntexa-module', 'syntexa-theme'], true)) {
             // Skip non-syntexa modules/packages
             return;
         }
@@ -240,6 +240,7 @@ class ModuleRegistry
             'name' => $name,
             'type' => $type,
             'namespace' => $namespace,
+            'composerType' => $composerType,
             'aliases' => $aliases,
             'templatePaths' => $templatePaths,
             'controllers' => self::findControllers($path, $namespace),
