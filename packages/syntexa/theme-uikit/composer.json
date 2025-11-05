@@ -1,0 +1,28 @@
+{
+  "name": "syntexa/theme-uikit",
+  "description": "Syntexa UI Kit Theme (Twig templates and overrides)",
+  "type": "syntexa-theme",
+  "license": "MIT",
+  "authors": [
+    { "name": "Syntexa", "email": "support@syntexa.local" }
+  ],
+  "require": {
+    "php": ">=8.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "Syntexa\\Theme\\UIKit\\": "src/"
+    }
+  },
+  "extra": {
+    "syntexa-module": {
+      "name": "theme-uikit",
+      "template_alias": "theme-uikit",
+      "template_paths": [
+        "src/Application/View/templates"
+      ]
+    }
+  }
+}
+
+

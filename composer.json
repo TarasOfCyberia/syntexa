@@ -20,7 +20,8 @@
         "syntexa/module-user-api": "*",
         "syntexa/module-user-frontend": "*",
         "syntexa/module-auth": "*",
-        "syntexa/module-api": "*"
+        "syntexa/module-api": "*",
+        "syntexa/theme-uikit": "*"
     },
   "require-dev": {},
     "autoload": {

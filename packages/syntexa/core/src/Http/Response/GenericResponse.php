@@ -38,6 +38,32 @@ class GenericResponse implements ContractResponse
     {
         return new CoreResponse($this->content, $this->statusCode, $this->headers);
     }
+
+    // Render pipeline hints (optional)
+    private ?string $renderHandle = null;
+    private array $renderContext = [];
+
+    public function setRenderHandle(string $handle): self
+    {
+        $this->renderHandle = $handle;
+        return $this;
+    }
+
+    public function getRenderHandle(): ?string
+    {
+        return $this->renderHandle;
+    }
+
+    public function setRenderContext(array $context): self
+    {
+        $this->renderContext = $context;
+        return $this;
+    }
+
+    public function getRenderContext(): array
+    {
+        return $this->renderContext;
+    }
 }
 
 

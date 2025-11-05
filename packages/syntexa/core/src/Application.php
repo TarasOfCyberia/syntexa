@@ -77,6 +77,25 @@ class Application
                     $resDto = new \Syntexa\Core\Http\Response\GenericResponse();
                 }
 
+                // Apply AsHttpResponse defaults if present
+                if ($resDto) {
+                    try {
+                        $r = new \ReflectionClass($resDto);
+                        $attrs = $r->getAttributes('Syntexa\\Frontend\\Attributes\\AsHttpResponse');
+                        if (!empty($attrs)) {
+                            $a = $attrs[0]->newInstance();
+                            if (method_exists($resDto, 'setRenderHandle')) {
+                                $resDto->setRenderHandle($a->handle ?? '');
+                            }
+                            if (method_exists($resDto, 'setRenderContext') && isset($a->context)) {
+                                $resDto->setRenderContext($a->context);
+                            }
+                        }
+                    } catch (\Throwable $e) {
+                        // ignore
+                    }
+                }
+
                 // Execute handlers in order
                 foreach ($handlerClasses as $handlerClass) {
                     echo "🔄 Executing handler: {$handlerClass}\n";
@@ -88,6 +107,25 @@ class Application
                     if (method_exists($handler, 'handle')) {
                         $resDto = $handler->handle($reqDto, $resDto);
                         echo "✅ Handler executed: {$handlerClass}\n";
+                    }
+                }
+
+                // Centralized rendering step (if requested by handlers)
+                if (method_exists($resDto, 'getRenderHandle')) {
+                    $handle = $resDto->getRenderHandle();
+                    if ($handle) {
+                        $context = method_exists($resDto, 'getRenderContext') ? $resDto->getRenderContext() : [];
+                        if (class_exists('Syntexa\\Frontend\\Layout\\LayoutRenderer')) {
+                            $html = \Syntexa\Frontend\Layout\LayoutRenderer::renderHandle($handle, $context);
+                            if (method_exists($resDto, 'setContent')) {
+                                $resDto->setContent($html);
+                            }
+                            if (method_exists($resDto, 'setHeader')) {
+                                $resDto->setHeader('Content-Type', 'text/html; charset=UTF-8');
+                            }
+                        } else {
+                            // Renderer not available; proceed without error
+                        }
                     }
                 }
 

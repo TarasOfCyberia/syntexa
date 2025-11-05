@@ -1,0 +1,15 @@
+{% if items is defined and items %}
+  <ul class="breadcrumbs-list">
+    {% for crumb in items %}
+      <li>
+        {% if crumb.url is defined %}
+          <a href="{{ crumb.url }}">{{ crumb.label }}</a>
+        {% else %}
+          {{ crumb.label }}
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+

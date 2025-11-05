@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <container extends="one-column">
   <container name="main">
-    <block template="@user-frontend/block/login/form.html.twig">
-      <arg name="title">Login</arg>
-      <arg name="heading">Login</arg>
-    </block>
-    <block template="@user-frontend/block/login/help.html.twig" />
+  <block template="@user-frontend/block/login/form.html.twig">
+    <arg name="title">Login</arg>
+    <arg name="heading">Login</arg>
+  </block>
+  <block template="@user-frontend/block/login/help.html.twig" />
   </container>
 </container>
 

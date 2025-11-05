@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>{{ title|default('Syntexa') }}</title>
+    <style>
+      .layout{display:grid;grid-template-columns:280px 1fr 280px;gap:24px}
+    </style>
+  </head>
+  <body>
+    <header>
+      {{ header|default('')|raw }}
+    </header>
+    <nav class="breadcrumbs">
+      {{ breadcrumbs|default('')|raw }}
+    </nav>
+    <div class="layout">
+      <aside>
+        {{ sidebar_left|default('')|raw }}
+      </aside>
+      <main>
+        {{ main|default(content|default(''))|raw }}
+      </main>
+      <aside>
+        {{ sidebar_right|default('')|raw }}
+      </aside>
+    </div>
+    <footer>
+      {{ footer|default('')|raw }}
+    </footer>
+  </body>
+</html>
+
+
