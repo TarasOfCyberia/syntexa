@@ -1,0 +1,29 @@
+{
+    "name": "syntexa/module-core-frontend",
+    "description": "Syntexa Core Frontend (SSR) module with Twig rendering",
+    "type": "syntexa-module",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Syntexa",
+            "email": "support@syntexa.local"
+        }
+    ],
+    "require": {
+        "php": "^8.4",
+        "twig/twig": "^3.10"
+    },
+    "autoload": {
+        "psr-4": {
+            "Syntexa\\Frontend\\": "src/"
+        }
+    },
+    "extra": {
+        "syntexa-module": {
+            "name": "core-frontend",
+            "description": "Server-Side Rendering capabilities using Twig"
+        }
+    }
+}
+
+

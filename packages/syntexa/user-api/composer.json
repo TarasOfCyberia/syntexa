@@ -1,5 +1,5 @@
 {
-    "name": "syntexa/module-user",
+    "name": "syntexa/module-user-api",
     "description": "User management module for Syntexa Framework",
     "type": "syntexa-module",
     "license": "MIT",

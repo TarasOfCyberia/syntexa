@@ -17,7 +17,8 @@
     ],
     "require": {
         "php": "^8.4",
-        "syntexa/module-user": "*",
+        "syntexa/module-user-api": "*",
+        "syntexa/module-user-frontend": "*",
         "syntexa/module-auth": "*",
         "syntexa/module-api": "*"
     },

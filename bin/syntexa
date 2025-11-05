@@ -1,33 +1,93 @@
-#!/usr/bin/env php
-<?php
+#!/usr/bin/env bash
+set -euo pipefail
 
-declare(strict_types=1);
+CMD="${1:-help}"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PORT="${SWOOLE_PORT:-9501}"
 
-/**
- * Syntexa Framework - Startup Script
- * 
- * This script starts the Syntexa framework in Swoole mode only.
- */
-
-echo "🚀 Starting Syntexa Framework...\n";
-
-// Check if Swoole is available
-if (!extension_loaded('swoole')) {
-    echo "❌ Swoole extension not found\n";
-    echo "Syntexa runs only under Swoole.\n";
-    echo "Install Swoole: https://www.swoole.co.uk/docs/get-started/installation\n";
-    exit(1);
+ensure_swoole() {
+  if ! php -r 'exit((int)!extension_loaded("swoole"));'; then
+    echo "❌ Swoole extension not found"
+    echo "Syntexa runs only under Swoole."
+    echo "Install Swoole: https://www.swoole.co.uk/docs/get-started/installation"
+    exit 1
+  fi
 }
 
-echo "✅ Swoole extension found\n";
-echo "🔄 Starting in Swoole mode...\n";
-echo "🌐 Server will be available at: http://localhost:9501\n";
-
-// Start Swoole server
-$serverScript = __DIR__ . '/../server.php';
-if (file_exists($serverScript)) {
-    require $serverScript;
-} else {
-    echo "❌ Error: server.php not found\n";
-    exit(1);
+start() {
+  echo "🚀 Starting Syntexa Framework..."
+  ensure_swoole
+  echo "✅ Swoole extension found"
+  echo "🔄 Starting in Swoole mode..."
+  echo "🌐 Server will be available at: http://localhost:${PORT}"
+  SWOOLE_PORT="${PORT}" php "${ROOT_DIR}/server.php"
 }
+
+stop() {
+  echo "🛑 Stopping Syntexa on port ${PORT}..."
+  PIDS=$(ss -ltnp 2>/dev/null | awk -v port=":${PORT}" '$4 ~ port {print $6}' | sed -n 's/.*pid=\([0-9]*\).*/\1/p' | sort -u)
+  if [ -z "${PIDS}" ]; then
+    echo "No processes found on port ${PORT}."
+    return 0
+  fi
+  echo "PIDs: ${PIDS}"
+  for pid in ${PIDS}; do kill -TERM "$pid" 2>/dev/null || true; done
+  sleep 1
+  REMAIN=$(ss -ltnp 2>/dev/null | awk -v port=":${PORT}" '$4 ~ port {print $6}' | sed -n 's/.*pid=\([0-9]*\).*/\1/p' | sort -u)
+  if [ -n "${REMAIN}" ]; then
+    for pid in ${REMAIN}; do kill -9 "$pid" 2>/dev/null || true; done
+  fi
+  echo "Stopped."
+}
+
+restart() {
+  stop
+  start
+}
+
+watch() {
+  echo "👀 Watch mode on port ${PORT}"
+  if command -v entr >/dev/null 2>&1; then
+    find "${ROOT_DIR}" -type f \( -name "*.php" -o -name "composer.json" \) | \
+      entr -r bash -c "SWOOLE_PORT=${PORT} \"${BASH_SOURCE[0]}\" restart"
+    exit 0
+  fi
+  if command -v inotifywait >/dev/null 2>&1; then
+    while inotifywait -e modify,create,delete,move -r "${ROOT_DIR}" --exclude 'vendor/|\.git/'; do
+      SWOOLE_PORT="${PORT}" "${BASH_SOURCE[0]}" restart
+    done
+    exit 0
+  fi
+  echo "Neither 'entr' nor 'inotifywait' found. Install one of them."
+  exit 1
+}
+
+help() {
+  cat <<EOF
+Syntexa CLI
+
+Usage:
+  $(basename "$0") <command> [options]
+
+Commands:
+  start           Start Swoole HTTP server (uses SWOOLE_PORT, default 9501)
+  stop            Stop all PHP processes listening on SWOOLE_PORT (default 9501)
+  restart         Stop then start server on SWOOLE_PORT
+  watch           Watch filesystem changes and auto-restart (requires entr or inotifywait)
+  help            Show this help
+
+Examples:
+  SWOOLE_PORT=9510 $(basename "$0") start
+  $(basename "$0") stop
+  $(basename "$0") watch
+EOF
+}
+
+case "${CMD}" in
+  start) start ;;
+  stop) stop ;;
+  restart) restart ;;
+  watch) watch ;;
+  help|-h|--help) help ;;
+  *) help ; exit 2 ;;
+esac

@@ -1,0 +1,30 @@
+{
+    "name": "syntexa/module-user-frontend",
+    "description": "User module frontend (SSR) for Syntexa",
+    "type": "syntexa-module",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Syntexa",
+            "email": "support@syntexa.local"
+        }
+    ],
+    "require": {
+        "php": "^8.4",
+        "syntexa/module-core-frontend": "*",
+        "syntexa/module-user-api": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Syntexa\\UserFrontend\\": "src/"
+        }
+    },
+    "extra": {
+        "syntexa-module": {
+            "name": "user-frontend",
+            "description": "SSR templates and handlers for User module"
+        }
+    }
+}
+
+
