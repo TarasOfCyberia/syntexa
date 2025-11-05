@@ -42,6 +42,8 @@ class GenericResponse implements ContractResponse
     // Render pipeline hints (optional)
     private ?string $renderHandle = null;
     private array $renderContext = [];
+    private ?\Syntexa\Core\Http\Response\ResponseFormat $renderFormat = null;
+    private ?string $rendererClass = null;
 
     public function setRenderHandle(string $handle): self
     {
@@ -63,6 +65,28 @@ class GenericResponse implements ContractResponse
     public function getRenderContext(): array
     {
         return $this->renderContext;
+    }
+
+    public function setRenderFormat(?\Syntexa\Core\Http\Response\ResponseFormat $format): self
+    {
+        $this->renderFormat = $format;
+        return $this;
+    }
+
+    public function getRenderFormat(): ?\Syntexa\Core\Http\Response\ResponseFormat
+    {
+        return $this->renderFormat;
+    }
+
+    public function setRendererClass(?string $rendererClass): self
+    {
+        $this->rendererClass = $rendererClass;
+        return $this;
+    }
+
+    public function getRendererClass(): ?string
+    {
+        return $this->rendererClass;
     }
 }
 

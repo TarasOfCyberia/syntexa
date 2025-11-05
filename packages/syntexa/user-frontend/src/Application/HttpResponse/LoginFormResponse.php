@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Syntexa\UserFrontend\Application\HttpResponse;
 
-use Syntexa\Frontend\Http\Response\HtmlResponse;
-use Syntexa\Frontend\Attributes\AsHttpResponse;
+use Syntexa\Core\Http\Response\GenericResponse;
+use Syntexa\Core\Attributes\AsHttpResponse;
 
-#[AsHttpResponse(handle: 'login', context: ['title' => 'Login'])]
-class LoginFormResponse extends HtmlResponse
+#[AsHttpResponse(handle: 'login')]
+class LoginFormResponse extends GenericResponse
 {
 }

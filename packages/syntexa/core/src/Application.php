@@ -81,7 +81,7 @@ class Application
                 if ($resDto) {
                     try {
                         $r = new \ReflectionClass($resDto);
-                        $attrs = $r->getAttributes('Syntexa\\Frontend\\Attributes\\AsHttpResponse');
+                        $attrs = $r->getAttributes('Syntexa\\Core\\Attributes\\AsHttpResponse');
                         if (!empty($attrs)) {
                             $a = $attrs[0]->newInstance();
                             if (method_exists($resDto, 'setRenderHandle')) {
@@ -89,6 +89,12 @@ class Application
                             }
                             if (method_exists($resDto, 'setRenderContext') && isset($a->context)) {
                                 $resDto->setRenderContext($a->context);
+                            }
+                            if (method_exists($resDto, 'setRenderFormat')) {
+                                $resDto->setRenderFormat($a->format ?? null);
+                            }
+                            if (method_exists($resDto, 'setRendererClass')) {
+                                $resDto->setRendererClass($a->renderer ?? null);
                             }
                         }
                     } catch (\Throwable $e) {
@@ -115,16 +121,35 @@ class Application
                     $handle = $resDto->getRenderHandle();
                     if ($handle) {
                         $context = method_exists($resDto, 'getRenderContext') ? $resDto->getRenderContext() : [];
-                        if (class_exists('Syntexa\\Frontend\\Layout\\LayoutRenderer')) {
-                            $html = \Syntexa\Frontend\Layout\LayoutRenderer::renderHandle($handle, $context);
+                        $format = method_exists($resDto, 'getRenderFormat') ? $resDto->getRenderFormat() : null;
+                        if ($format === null) {
+                            // default to layout when handle provided
+                            $format = \Syntexa\Core\Http\Response\ResponseFormat::Layout;
+                        }
+                        $rendererClass = method_exists($resDto, 'getRendererClass') ? $resDto->getRendererClass() : null;
+
+                        if ($format === \Syntexa\Core\Http\Response\ResponseFormat::Json) {
+                            $json = json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                             if (method_exists($resDto, 'setContent')) {
-                                $resDto->setContent($html);
+                                $resDto->setContent($json ?: '');
                             }
                             if (method_exists($resDto, 'setHeader')) {
-                                $resDto->setHeader('Content-Type', 'text/html; charset=UTF-8');
+                                $resDto->setHeader('Content-Type', 'application/json');
+                            }
+                        } elseif ($format === \Syntexa\Core\Http\Response\ResponseFormat::Layout) {
+                            // Use provided renderer or default LayoutRenderer
+                            $renderer = $rendererClass ?: 'Syntexa\\Frontend\\Layout\\LayoutRenderer';
+                            if (class_exists($renderer) && method_exists($renderer, 'renderHandle')) {
+                                $html = $renderer::renderHandle($handle, $context);
+                                if (method_exists($resDto, 'setContent')) {
+                                    $resDto->setContent($html);
+                                }
+                                if (method_exists($resDto, 'setHeader')) {
+                                    $resDto->setHeader('Content-Type', 'text/html; charset=UTF-8');
+                                }
                             }
                         } else {
-                            // Renderer not available; proceed without error
+                            // raw/no-op
                         }
                     }
                 }
