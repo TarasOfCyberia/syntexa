@@ -194,16 +194,98 @@ class ModuleRegistry
      */
     private static function registerModule(string $path, string $name, string $type, string $namespace): void
     {
+        // Filter by composer "type": only accept syntexa-module
+        $composerType = self::readComposerType($path);
+        if ($composerType !== 'syntexa-module') {
+            // Skip non-syntexa modules/packages
+            return;
+        }
+
+        $meta = self::readComposerMeta($path);
+
+        // Default template path inside module
+        $defaultTemplatePath = $path . '/src/Application/View/templates';
+
+        // Aliases
+        $aliases = [];
+        $aliases[] = $name;
+        $friendly = $name;
+        foreach (["syntexa-module-", "module-"] as $prefix) {
+            if (str_starts_with($friendly, $prefix)) {
+                $friendly = substr($friendly, strlen($prefix));
+            }
+        }
+        if ($friendly !== $name) {
+            $aliases[] = $friendly;
+        }
+        if (!empty($meta['template_alias'])) {
+            $aliases[] = (string)$meta['template_alias'];
+        }
+        $aliases = array_values(array_unique($aliases));
+
+        // Template paths
+        $templatePaths = [];
+        if (is_dir($defaultTemplatePath)) {
+            $templatePaths[] = $defaultTemplatePath;
+        }
+        foreach ($meta['template_paths'] as $rel) {
+            $p = $path . '/' . ltrim($rel, '/');
+            if (is_dir($p)) {
+                $templatePaths[] = $p;
+            }
+        }
+
         self::$modules[] = [
             'path' => $path,
             'name' => $name,
             'type' => $type,
             'namespace' => $namespace,
+            'aliases' => $aliases,
+            'templatePaths' => $templatePaths,
             'controllers' => self::findControllers($path, $namespace),
             'routes' => self::findRoutes($path, $namespace)
         ];
         
         echo "📦 Registered {$type} module: {$name} ({$namespace})\n";
+    }
+
+    private static function readComposerType(string $modulePath): ?string
+    {
+        $composerJson = $modulePath . '/composer.json';
+        if (!is_file($composerJson)) {
+            return null;
+        }
+        try {
+            $json = json_decode((string)file_get_contents($composerJson), true, 512, JSON_THROW_ON_ERROR);
+            return $json['type'] ?? null;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    private static function readComposerMeta(string $modulePath): array
+    {
+        $meta = [
+            'template_alias' => null,
+            'template_paths' => []
+        ];
+        $composerJson = $modulePath . '/composer.json';
+        if (!is_file($composerJson)) {
+            return $meta;
+        }
+        try {
+            $json = json_decode((string)file_get_contents($composerJson), true, 512, JSON_THROW_ON_ERROR);
+            $extra = $json['extra']['syntexa-module'] ?? [];
+            if (!empty($extra['template_alias']) && is_string($extra['template_alias'])) {
+                $meta['template_alias'] = $extra['template_alias'];
+            }
+            if (!empty($extra['template_paths']) && is_array($extra['template_paths'])) {
+                $meta['template_paths'] = $extra['template_paths'];
+            }
+        } catch (\Throwable $e) {
+            // ignore invalid json
+        }
+        return $meta;
     }
     
     /**
