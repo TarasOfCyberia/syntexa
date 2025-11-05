@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Syntexa\Frontend\Layout;
 
 use Syntexa\Frontend\View\TwigFactory;
+use Syntexa\Frontend\Block\BlockContext;
+use Syntexa\Frontend\Block\RenderState;
 
 class LayoutRenderer
 {
@@ -49,6 +51,25 @@ class LayoutRenderer
             foreach ($node->children() as $child) {
                 if ($child->getName() === 'arg' && isset($child['name'])) {
                     $data[(string)$child['name']] = (string)$child;
+                }
+            }
+            // Execute BlockHandlers if block class name provided
+            $blockClass = (string)($node['name'] ?? '');
+            if ($blockClass !== '') {
+                $handlers = BlockHandlerRegistry::getHandlers($blockClass);
+                if (!empty($handlers)) {
+                    $state = new RenderState($data);
+                    $ctx = new BlockContext(handle: (string)($node['handle'] ?? ''), args: $data, request: null);
+                    foreach ($handlers as $h) {
+                        $inst = new ($h['class'])();
+                        if (method_exists($inst, 'handle')) {
+                            $state = $inst->handle($ctx, $state);
+                        }
+                    }
+                    $data = $state->data;
+                    if (isset($data['template']) && is_string($data['template'])) {
+                        $template = $data['template'];
+                    }
                 }
             }
             return TwigFactory::get()->render($template, $data);
