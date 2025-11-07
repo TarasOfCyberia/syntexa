@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Syntexa\User\Application\HttpResponse;
+namespace Syntexa\User\Application\State\Response;
 
 use Syntexa\Core\Http\Response\GenericResponse;
 use Syntexa\Core\Attributes\AsHttpResponse;
 use Syntexa\Core\Http\Response\ResponseFormat;
 
 #[AsHttpResponse(handle: 'api.login', format: ResponseFormat::Json)]
-class LoginApiResponse extends GenericResponse
+class LoginApiStateResponse extends GenericResponse
 {
 }
 
