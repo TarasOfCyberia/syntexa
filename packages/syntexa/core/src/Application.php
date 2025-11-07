@@ -25,6 +25,9 @@ class Application
     
     public function handleRequest(Request $request): Response
     {
+        // Clear superglobals for security (prevent accidental use of unvalidated data)
+        \Syntexa\Core\Http\SecurityHelper::clearSuperglobals();
+        
         // Initialize attribute discovery
         AttributeDiscovery::initialize();
         
@@ -69,6 +72,16 @@ class Application
                 if (!$reqDto) {
                     throw new \RuntimeException("Cannot instantiate request class: {$requestClass}");
                 }
+                
+                // Hydrate Request DTO from HTTP Request data
+                try {
+                    $reqDto = \Syntexa\Core\Http\RequestDtoHydrator::hydrate($reqDto, $request);
+                    echo "✅ Hydrated Request DTO: {$requestClass}\n";
+                } catch (\Throwable $e) {
+                    echo "⚠️  Error hydrating Request DTO: " . $e->getMessage() . "\n";
+                    // Continue with empty DTO if hydration fails
+                }
+                
                 $resDto = ($responseClass && class_exists($responseClass)) ? new $responseClass() : null;
 
                 // Fallback generic response if none supplied

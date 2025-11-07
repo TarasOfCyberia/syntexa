@@ -128,6 +128,26 @@ readonly class Request
     
     public function isJson(): bool
     {
-        return $this->getHeader('Content-Type') === 'application/json';
+        $contentType = $this->getHeader('Content-Type');
+        return $contentType !== null && str_contains(strtolower($contentType), 'application/json');
+    }
+    
+    /**
+     * Get parsed JSON body as array
+     * 
+     * @return array|null Parsed JSON data or null if not JSON or parse failed
+     */
+    public function getJsonBody(): ?array
+    {
+        if (!$this->isJson() || !$this->content) {
+            return null;
+        }
+        
+        $data = json_decode($this->content, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return null;
+        }
+        
+        return is_array($data) ? $data : null;
     }
 }

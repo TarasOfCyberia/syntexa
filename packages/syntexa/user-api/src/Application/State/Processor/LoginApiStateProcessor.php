@@ -16,6 +16,7 @@ use Syntexa\User\Application\State\Response\LoginApiStateResponse;
 )]
 class LoginApiStateProcessor implements RequestInterface
 {
+    public int $id;
 }
 
 
