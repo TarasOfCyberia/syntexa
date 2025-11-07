@@ -18,10 +18,7 @@
     "require": {
         "php": "^8.4",
         "syntexa/module-user-api": "*",
-        "syntexa/module-user-frontend": "*",
-        "syntexa/module-auth": "*",
-        "syntexa/module-api": "*",
-        "syntexa/theme-uikit": "*"
+        "syntexa/module-user-frontend": "*"
     },
   "require-dev": {},
     "autoload": {

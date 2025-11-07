@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "9757d9d657dbd0e699b219db85bd1a1c",
+    "content-hash": "62ed17f519952af139a0acbd42131950",
     "packages": [
         {
             "name": "symfony/deprecation-contracts",
@@ -240,80 +240,6 @@
                 }
             ],
             "time": "2024-12-23T08:48:59+00:00"
-        },
-        {
-            "name": "syntexa/module-api",
-            "version": "dev-master",
-            "dist": {
-                "type": "path",
-                "url": "./packages/syntexa/api",
-                "reference": "2f590fd2eb92c4be737e5eeced2485f34bd88700"
-            },
-            "require": {
-                "php": "^8.4"
-            },
-            "type": "syntexa-module",
-            "extra": {
-                "syntexa-module": {
-                    "name": "api",
-                    "description": "API utilities and helpers"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Syntexa\\ApiModule\\": "src/"
-                }
-            },
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Taras",
-                    "email": "taras@example.com"
-                }
-            ],
-            "description": "API utilities module for Syntexa Framework",
-            "transport-options": {
-                "relative": true
-            }
-        },
-        {
-            "name": "syntexa/module-auth",
-            "version": "dev-master",
-            "dist": {
-                "type": "path",
-                "url": "./packages/syntexa/auth",
-                "reference": "cf53dd31a90dc25b2f9d29751b284ed9b96a32b0"
-            },
-            "require": {
-                "php": "^8.4"
-            },
-            "type": "syntexa-module",
-            "extra": {
-                "syntexa-module": {
-                    "name": "auth",
-                    "description": "Authentication functionality"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Syntexa\\AuthModule\\": "src/"
-                }
-            },
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Taras",
-                    "email": "taras@example.com"
-                }
-            ],
-            "description": "Authentication module for Syntexa Framework",
-            "transport-options": {
-                "relative": true
-            }
         },
         {
             "name": "syntexa/module-core-frontend",

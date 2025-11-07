@@ -263,8 +263,6 @@ class IntelligentAutoloader
             'Syntexa\\Core\\ModuleRegistry' => 'vendor/syntexa/core/src/ModuleRegistry.php',
             'Syntexa\\Core\\AutoloaderGenerator' => 'vendor/syntexa/core/src/AutoloaderGenerator.php',
             'Syntexa\\Core\\IntelligentAutoloader' => 'vendor/syntexa/core/src/IntelligentAutoloader.php',
-            'Syntexa\\Core\\Attributes\\AsController' => 'vendor/syntexa/core/src/Attributes/AsController.php',
-            
             'Syntexa\\Core\\Discovery\\AttributeDiscovery' => 'vendor/syntexa/core/src/Discovery/AttributeDiscovery.php'
         ];
         

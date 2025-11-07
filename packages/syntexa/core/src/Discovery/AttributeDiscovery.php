@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace Syntexa\Core\Discovery;
 
-use Syntexa\Core\Attributes\AsController;
 use Syntexa\Core\Attributes\AsHttpRequest;
 use Syntexa\Core\Attributes\AsHttpHandler;
 use Syntexa\Core\ModuleRegistry;
 use Syntexa\Core\IntelligentAutoloader;
 use ReflectionClass;
-use ReflectionMethod;
 
 /**
  * Discovers and caches attributes from PHP classes
@@ -20,7 +18,6 @@ use ReflectionMethod;
  */
 class AttributeDiscovery
 {
-    private static array $controllers = [];
     private static array $routes = [];
     private static array $httpRequests = [];
     private static array $httpHandlers = [];
@@ -51,20 +48,11 @@ class AttributeDiscovery
         
         $endTime = microtime(true);
         
-        echo "✅ Found " . count(self::$controllers) . " controllers\n";
         echo "✅ Found " . count(self::$routes) . " routes\n";
         echo "✅ Found " . count(self::$httpRequests) . " http requests\n";
         echo "⏱️  Discovery took " . round(($endTime - $startTime) * 1000, 2) . "ms\n";
         
         self::$initialized = true;
-    }
-    
-    /**
-     * Get all discovered controllers
-     */
-    public static function getControllers(): array
-    {
-        return self::$controllers;
     }
     
     /**
@@ -110,23 +98,6 @@ class AttributeDiscovery
      */
     private static function scanAttributesIntelligently(): void
     {
-        // Find all classes with AsController attribute (legacy/simple)
-        $controllerClasses = array_filter(
-            IntelligentAutoloader::findClassesWithAttribute(AsController::class),
-            fn ($class) => str_starts_with($class, 'Syntexa\\')
-        );
-        
-        echo "🧠 Found " . count($controllerClasses) . " controller classes\n";
-        
-        foreach ($controllerClasses as $className) {
-            try {
-                $class = new ReflectionClass($className);
-                self::analyzeClass($class);
-            } catch (\Throwable $e) {
-                echo "⚠️  Error analyzing class {$className}: " . $e->getMessage() . "\n";
-            }
-        }
-
         // Find all classes with AsHttpRequest attribute
         $httpRequestClasses = array_filter(
             IntelligentAutoloader::findClassesWithAttribute(AsHttpRequest::class),
@@ -235,16 +206,8 @@ class AttributeDiscovery
             
             $files = self::getAllPhpFiles($module['path']);
             
-            foreach ($files as $file) {
-                try {
-                    $class = self::loadClassFromFile($file);
-                    if ($class) {
-                        self::analyzeClass($class);
-                    }
-                } catch (\Throwable $e) {
-                    echo "⚠️  Error analyzing file {$file}: " . $e->getMessage() . "\n";
-                }
-            }
+            // Legacy scanAllAttributes method is no longer used
+            // All discovery is done via IntelligentAutoloader in scanAttributesIntelligently()
         }
     }
     
@@ -303,50 +266,4 @@ class AttributeDiscovery
         return new ReflectionClass($fullClassName);
     }
     
-    /**
-     * Analyze a class for attributes
-     */
-    private static function analyzeClass(ReflectionClass $class): void
-    {
-        // Check for AsController attribute
-        $controllerAttributes = $class->getAttributes(AsController::class);
-        if (!empty($controllerAttributes)) {
-            $controllerAttr = $controllerAttributes[0]->newInstance();
-            
-            self::$controllers[] = [
-                'class' => $class->getName(),
-                'name' => $controllerAttr->name ?? $class->getShortName(),
-                'tags' => $controllerAttr->tags,
-                'public' => $controllerAttr->public,
-                'file' => $class->getFileName()
-            ];
-            
-            // New approach: AsController defines the route directly
-            if (!empty($controllerAttr->path)) {
-                echo "🎯 Found single-action controller: {$class->getName()} -> {$controllerAttr->path}\n";
-                self::$routes[] = [
-                    'path' => $controllerAttr->path,
-                    'methods' => $controllerAttr->methods,
-                    'name' => $controllerAttr->name ?? $class->getShortName(),
-                    'class' => $class->getName(),
-                    'method' => '__invoke', // Single action controller
-                    'requirements' => $controllerAttr->requirements,
-                    'defaults' => $controllerAttr->defaults,
-                    'options' => $controllerAttr->options
-                ];
-            } else {
-                // Legacy approach: Analyze methods for routes
-                self::analyzeMethods($class);
-            }
-        }
-    }
-    
-    /**
-     * Analyze class methods for Route attributes (legacy)
-     */
-    private static function analyzeMethods(ReflectionClass $class): void
-    {
-        // Legacy per-method routes via Route attribute are no longer supported.
-        // Keep the method for backward compatibility without doing anything.
-    }
 }
