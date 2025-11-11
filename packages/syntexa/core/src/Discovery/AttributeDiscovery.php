@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Syntexa\Core\Discovery;
 
-use Syntexa\Core\Attributes\AsHttpRequest;
-use Syntexa\Core\Attributes\AsHttpHandler;
+use Syntexa\Core\Attributes\AsRequest;
+use Syntexa\Core\Attributes\AsRequestHandler;
 use Syntexa\Core\ModuleRegistry;
 use Syntexa\Core\IntelligentAutoloader;
 use ReflectionClass;
@@ -49,7 +49,7 @@ class AttributeDiscovery
         $endTime = microtime(true);
         
         echo "✅ Found " . count(self::$routes) . " routes\n";
-        echo "✅ Found " . count(self::$httpRequests) . " http requests\n";
+        echo "✅ Found " . count(self::$httpRequests) . " requests\n";
         echo "⏱️  Discovery took " . round(($endTime - $startTime) * 1000, 2) . "ms\n";
         
         self::$initialized = true;
@@ -72,10 +72,10 @@ class AttributeDiscovery
         foreach (self::$routes as $route) {
             if ($route['path'] === $path && in_array($method, $route['methods'])) {
                 echo "✅ Found matching route: {$route['path']}\n";
-                // enrich with http request handlers if applicable
+                // enrich with request handlers if applicable
                 if (($route['type'] ?? null) === 'http-request') {
                     $reqClass = $route['class'];
-                    echo "📦 Enriching http-request route with class: {$reqClass}\n";
+                    echo "📦 Enriching request route with class: {$reqClass}\n";
                     $extra = self::$httpRequests[$reqClass] ?? null;
                     if ($extra) {
                         $route['handlers'] = $extra['handlers'];
@@ -98,18 +98,18 @@ class AttributeDiscovery
      */
     private static function scanAttributesIntelligently(): void
     {
-        // Find all classes with AsHttpRequest attribute
+        // Find all classes with AsRequest attribute
         $httpRequestClasses = array_filter(
-            IntelligentAutoloader::findClassesWithAttribute(AsHttpRequest::class),
+            IntelligentAutoloader::findClassesWithAttribute(AsRequest::class),
             fn ($class) => str_starts_with($class, 'Syntexa\\')
         );
-        echo "🔍 Found " . count($httpRequestClasses) . " http request classes\n";
+        echo "🔍 Found " . count($httpRequestClasses) . " request classes\n";
         foreach ($httpRequestClasses as $className) {
             try {
                 $class = new ReflectionClass($className);
-                $attrs = $class->getAttributes(AsHttpRequest::class);
+                $attrs = $class->getAttributes(AsRequest::class);
                 if (!empty($attrs)) {
-                    /** @var AsHttpRequest $attr */
+                    /** @var AsRequest $attr */
                     $attr = $attrs[0]->newInstance();
                     self::$httpRequests[$class->getName()] = [
                         'requestClass' => $class->getName(),
@@ -133,25 +133,25 @@ class AttributeDiscovery
                         'options' => $attr->options,
                         'type' => 'http-request'
                     ];
-                    echo "✅ Registered http-request: {$attr->path} -> {$class->getName()}\n";
+                    echo "✅ Registered request: {$attr->path} -> {$class->getName()}\n";
                 }
             } catch (\Throwable $e) {
-                echo "⚠️  Error analyzing http request {$className}: " . $e->getMessage() . "\n";
+                echo "⚠️  Error analyzing request {$className}: " . $e->getMessage() . "\n";
             }
         }
 
         // Find handlers and map to requests
         $httpHandlerClasses = array_filter(
-            IntelligentAutoloader::findClassesWithAttribute(AsHttpHandler::class),
+            IntelligentAutoloader::findClassesWithAttribute(AsRequestHandler::class),
             fn ($class) => str_starts_with($class, 'Syntexa\\')
         );
-        echo "🔍 Found " . count($httpHandlerClasses) . " http handler classes\n";
+        echo "🔍 Found " . count($httpHandlerClasses) . " request handler classes\n";
         foreach ($httpHandlerClasses as $className) {
             try {
                 $class = new ReflectionClass($className);
-                $attrs = $class->getAttributes(AsHttpHandler::class);
+                $attrs = $class->getAttributes(AsRequestHandler::class);
                 if (!empty($attrs)) {
-                    /** @var AsHttpHandler $attr */
+                    /** @var AsRequestHandler $attr */
                     $attr = $attrs[0]->newInstance();
                     $for = $attr->getFor();
                     echo "🔗 Handler: {$class->getName()} -> for: {$for}\n";
@@ -167,7 +167,7 @@ class AttributeDiscovery
                     }
                 }
             } catch (\Throwable $e) {
-                echo "⚠️  Error analyzing http handler {$className}: " . $e->getMessage() . "\n";
+                echo "⚠️  Error analyzing request handler {$className}: " . $e->getMessage() . "\n";
             }
         }
 

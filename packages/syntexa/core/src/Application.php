@@ -56,9 +56,9 @@ class Application
     private function handleRoute(array $route, Request $request): Response
     {
         try {
-            // HTTP Request/Handler flow
+            // Request/Handler flow
             if (($route['type'] ?? null) === 'http-request') {
-                echo "🔄 Processing http-request route\n";
+                echo "🔄 Processing request route\n";
                 $requestClass = $route['class'];
                 $responseClass = $route['responseClass'] ?? null;
                 $handlerClasses = $route['handlers'] ?? [];
@@ -90,11 +90,11 @@ class Application
                     $resDto = new \Syntexa\Core\Http\Response\GenericResponse();
                 }
 
-                // Apply AsHttpResponse defaults if present
+                // Apply AsResponse defaults if present
                 if ($resDto) {
                     try {
                         $r = new \ReflectionClass($resDto);
-                        $attrs = $r->getAttributes('Syntexa\\Core\\Attributes\\AsHttpResponse');
+                        $attrs = $r->getAttributes('Syntexa\\Core\\Attributes\\AsResponse');
                         if (!empty($attrs)) {
                             $a = $attrs[0]->newInstance();
                             if (method_exists($resDto, 'setRenderHandle')) {
