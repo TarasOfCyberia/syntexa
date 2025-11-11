@@ -82,6 +82,10 @@ class Application
                     // Continue with empty DTO if hydration fails
                 }
                 
+                // Apply response class override if any
+                if ($responseClass) {
+                    $responseClass = \Syntexa\Core\Discovery\AttributeDiscovery::getOverriddenResponseClass($responseClass);
+                }
                 $resDto = ($responseClass && class_exists($responseClass)) ? new $responseClass() : null;
 
                 // Fallback generic response if none supplied
@@ -108,6 +112,22 @@ class Application
                             }
                             if (method_exists($resDto, 'setRendererClass')) {
                                 $resDto->setRendererClass($a->renderer ?? null);
+                            }
+                        }
+                        // Apply response attribute overrides from discovery (take precedence)
+                        $ov = \Syntexa\Core\Discovery\AttributeDiscovery::getResponseAttrOverride($r->getName());
+                        if ($ov) {
+                            if (isset($ov['handle']) && method_exists($resDto, 'setRenderHandle')) {
+                                $resDto->setRenderHandle($ov['handle']);
+                            }
+                            if (isset($ov['context']) && method_exists($resDto, 'setRenderContext')) {
+                                $resDto->setRenderContext($ov['context']);
+                            }
+                            if (isset($ov['format']) && method_exists($resDto, 'setRenderFormat')) {
+                                $resDto->setRenderFormat($ov['format']);
+                            }
+                            if (isset($ov['renderer']) && method_exists($resDto, 'setRendererClass')) {
+                                $resDto->setRendererClass($ov['renderer']);
                             }
                         }
                     } catch (\Throwable $e) {

@@ -6,6 +6,8 @@ namespace Syntexa\Core\Discovery;
 
 use Syntexa\Core\Attributes\AsRequest;
 use Syntexa\Core\Attributes\AsRequestHandler;
+use Syntexa\Core\Attributes\AsRequestOverride;
+use Syntexa\Core\Attributes\AsResponseOverride;
 use Syntexa\Core\ModuleRegistry;
 use Syntexa\Core\IntelligentAutoloader;
 use ReflectionClass;
@@ -21,6 +23,9 @@ class AttributeDiscovery
     private static array $routes = [];
     private static array $httpRequests = [];
     private static array $httpHandlers = [];
+    private static array $requestClassAliases = [];
+    private static array $responseClassAliases = [];
+    private static array $responseAttrOverrides = [];
     private static bool $initialized = false;
     
     /**
@@ -140,6 +145,11 @@ class AttributeDiscovery
             }
         }
 
+        // Apply overrides from src (AsRequestOverride)
+        self::applyRequestOverrides();
+        // Apply response overrides from src (AsResponseOverride)
+        self::collectResponseOverrides();
+
         // Find handlers and map to requests
         $httpHandlerClasses = array_filter(
             IntelligentAutoloader::findClassesWithAttribute(AsRequestHandler::class),
@@ -154,6 +164,10 @@ class AttributeDiscovery
                     /** @var AsRequestHandler $attr */
                     $attr = $attrs[0]->newInstance();
                     $for = $attr->getFor();
+                    // remap to alias if override replaced the request class
+                    if (isset(self::$requestClassAliases[$for])) {
+                        $for = self::$requestClassAliases[$for];
+                    }
                     echo "🔗 Handler: {$class->getName()} -> for: {$for}\n";
                     self::$httpHandlers[$class->getName()] = [
                         'handlerClass' => $class->getName(),
@@ -192,6 +206,188 @@ class AttributeDiscovery
                 }
             }
         }
+    }
+    
+    /**
+     * Apply request overrides declared with AsRequestOverride.
+     * Only overrides from project's src/ should be considered.
+     */
+    private static function applyRequestOverrides(): void
+    {
+        $overrideClasses = array_filter(
+            IntelligentAutoloader::findClassesWithAttribute(AsRequestOverride::class),
+            fn ($class) => str_starts_with($class, 'Syntexa\\')
+        );
+        if (empty($overrideClasses)) {
+            return;
+        }
+        // Collect overrides with basic filtering: prefer files under project src/
+        $overrides = [];
+        foreach ($overrideClasses as $className) {
+            try {
+                $rc = new \ReflectionClass($className);
+                $file = $rc->getFileName() ?: '';
+                // Heuristic: consider as project override if file path contains '/src/' but not '/packages/syntexa/'
+                $isProjectSrc = (strpos($file, '/src/') !== false) && (strpos($file, '/packages/syntexa/') === false);
+                if (!$isProjectSrc) {
+                    continue;
+                }
+                $attrs = $rc->getAttributes(AsRequestOverride::class);
+                if (empty($attrs)) {
+                    continue;
+                }
+                /** @var AsRequestOverride $o */
+                $o = $attrs[0]->newInstance();
+                $overrides[] = ['meta' => $o, 'file' => $file, 'class' => $className];
+            } catch (\Throwable $e) {
+                echo "⚠️  Error analyzing request override {$className}: " . $e->getMessage() . "\n";
+            }
+        }
+        if (empty($overrides)) {
+            return;
+        }
+        // Apply overrides (sorted by priority desc)
+        usort($overrides, function ($a, $b) {
+            return ($b['meta']->priority ?? 0) <=> ($a['meta']->priority ?? 0);
+        });
+        foreach ($overrides as $ov) {
+            /** @var AsRequestOverride $meta */
+            $meta = $ov['meta'];
+            $target = $meta->of;
+            if (!isset(self::$httpRequests[$target])) {
+                echo "⚠️  Override target not found: {$target}\n";
+                continue;
+            }
+            $entry = &self::$httpRequests[$target];
+            $oldPath = $entry['path'];
+            $oldMethods = $entry['methods'];
+            // If override replaces the request class, move registry key and update routes
+            if ($meta->use !== null && $meta->use !== $target) {
+                self::$httpRequests[$meta->use] = $entry;
+                self::$httpRequests[$meta->use]['requestClass'] = $meta->use;
+                unset(self::$httpRequests[$target]);
+                self::$requestClassAliases[$target] = $meta->use;
+                foreach (self::$routes as &$route) {
+                    if (($route['type'] ?? null) === 'http-request' && ($route['class'] ?? null) === $target) {
+                        $route['class'] = $meta->use;
+                    }
+                }
+                // adjust reference for further override fields
+                $entry = &self::$httpRequests[$meta->use];
+            }
+            if ($meta->path !== null) {
+                $entry['path'] = $meta->path;
+            }
+            if ($meta->methods !== null) {
+                $entry['methods'] = $meta->methods;
+            }
+            if ($meta->name !== null) {
+                $entry['name'] = $meta->name;
+            }
+            if ($meta->responseWith !== null) {
+                $entry['responseClass'] = $meta->responseWith ?: null;
+            }
+            // Update route record referencing this request class
+            foreach (self::$routes as &$route) {
+                if (($route['type'] ?? null) === 'http-request' && (($route['class'] ?? null) === ($meta->use ?? $target))) {
+                    if ($meta->path !== null) {
+                        $route['path'] = $meta->path;
+                    }
+                    if ($meta->methods !== null) {
+                        $route['methods'] = $meta->methods;
+                    }
+                    if ($meta->name !== null) {
+                        $route['name'] = $meta->name;
+                    }
+                    // no change for options/defaults here; could be extended later
+                }
+            }
+            echo "🔧 Overridden request {$target}: {$oldPath} -> {$entry['path']} (" . implode(',', $oldMethods) . " → " . implode(',', $entry['methods']) . ")\n";
+        }
+    }
+    
+    /**
+     * Collect response overrides declared with AsResponseOverride.
+     * Store class replacement and attribute overrides for later usage.
+     */
+    private static function collectResponseOverrides(): void
+    {
+        $overrideClasses = array_filter(
+            IntelligentAutoloader::findClassesWithAttribute(AsResponseOverride::class),
+            fn ($class) => str_starts_with($class, 'Syntexa\\')
+        );
+        if (empty($overrideClasses)) {
+            return;
+        }
+        $overrides = [];
+        foreach ($overrideClasses as $className) {
+            try {
+                $rc = new \ReflectionClass($className);
+                $file = $rc->getFileName() ?: '';
+                $isProjectSrc = (strpos($file, '/src/') !== false) && (strpos($file, '/packages/syntexa/') === false);
+                if (!$isProjectSrc) {
+                    continue;
+                }
+                $attrs = $rc->getAttributes(AsResponseOverride::class);
+                if (empty($attrs)) {
+                    continue;
+                }
+                /** @var AsResponseOverride $o */
+                $o = $attrs[0]->newInstance();
+                $overrides[] = ['meta' => $o, 'file' => $file, 'class' => $className];
+            } catch (\Throwable $e) {
+                echo "⚠️  Error analyzing response override {$className}: " . $e->getMessage() . "\n";
+            }
+        }
+        if (empty($overrides)) {
+            return;
+        }
+        usort($overrides, function ($a, $b) {
+            return ($b['meta']->priority ?? 0) <=> ($a['meta']->priority ?? 0);
+        });
+        foreach ($overrides as $ov) {
+            /** @var AsResponseOverride $meta */
+            $meta = $ov['meta'];
+            $target = $meta->of;
+            if ($meta->use !== null && $meta->use !== $target) {
+                self::$responseClassAliases[$target] = $meta->use;
+            }
+            $attrs = [];
+            if ($meta->handle !== null) {
+                $attrs['handle'] = $meta->handle;
+            }
+            if ($meta->format !== null) {
+                $attrs['format'] = $meta->format;
+            }
+            if ($meta->renderer !== null) {
+                $attrs['renderer'] = $meta->renderer;
+            }
+            if ($meta->context !== null) {
+                $attrs['context'] = $meta->context;
+            }
+            if (!empty($attrs)) {
+                self::$responseAttrOverrides[$target] = $attrs;
+            }
+            echo "🔧 Collected response override for {$target}\n";
+        }
+    }
+    
+    public static function getOverriddenResponseClass(string $original): string
+    {
+        return self::$responseClassAliases[$original] ?? $original;
+    }
+    
+    public static function getResponseAttrOverride(string $class): ?array
+    {
+        // If class was replaced, prefer override keyed by original OR new
+        if (isset(self::$responseAttrOverrides[$class])) {
+            return self::$responseAttrOverrides[$class];
+        }
+        $original = array_search($class, self::$responseClassAliases, true);
+        if ($original && isset(self::$responseAttrOverrides[$original])) {
+            return self::$responseAttrOverrides[$original];
+        }
+        return null;
     }
     
     /**

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Syntexa\User\Application\Handler;
+namespace Syntexa\User\Application\Handler\Request;
 
 use Syntexa\Core\Attributes\AsRequestHandler;
 use Syntexa\Core\Handler\HttpHandlerInterface;
