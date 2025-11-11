@@ -24,7 +24,6 @@ class AttributeDiscovery
     private static array $httpRequests = [];
     private static array $httpHandlers = [];
     private static array $requestClassAliases = [];
-    private static array $responseClassAliases = [];
     private static array $responseAttrOverrides = [];
     private static bool $initialized = false;
     
@@ -147,7 +146,7 @@ class AttributeDiscovery
 
         // Apply overrides from src (AsRequestOverride)
         self::applyRequestOverrides();
-        // Apply response overrides from src (AsResponseOverride)
+        // Apply response overrides from src (AsResponseOverride) — only render hints, not class swap
         self::collectResponseOverrides();
 
         // Find handlers and map to requests
@@ -349,9 +348,6 @@ class AttributeDiscovery
             /** @var AsResponseOverride $meta */
             $meta = $ov['meta'];
             $target = $meta->of;
-            if ($meta->use !== null && $meta->use !== $target) {
-                self::$responseClassAliases[$target] = $meta->use;
-            }
             $attrs = [];
             if ($meta->handle !== null) {
                 $attrs['handle'] = $meta->handle;
@@ -372,22 +368,9 @@ class AttributeDiscovery
         }
     }
     
-    public static function getOverriddenResponseClass(string $original): string
-    {
-        return self::$responseClassAliases[$original] ?? $original;
-    }
-    
     public static function getResponseAttrOverride(string $class): ?array
     {
-        // If class was replaced, prefer override keyed by original OR new
-        if (isset(self::$responseAttrOverrides[$class])) {
-            return self::$responseAttrOverrides[$class];
-        }
-        $original = array_search($class, self::$responseClassAliases, true);
-        if ($original && isset(self::$responseAttrOverrides[$original])) {
-            return self::$responseAttrOverrides[$original];
-        }
-        return null;
+        return self::$responseAttrOverrides[$class] ?? null;
     }
     
     /**

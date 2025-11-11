@@ -82,10 +82,6 @@ class Application
                     // Continue with empty DTO if hydration fails
                 }
                 
-                // Apply response class override if any
-                if ($responseClass) {
-                    $responseClass = \Syntexa\Core\Discovery\AttributeDiscovery::getOverriddenResponseClass($responseClass);
-                }
                 $resDto = ($responseClass && class_exists($responseClass)) ? new $responseClass() : null;
 
                 // Fallback generic response if none supplied
