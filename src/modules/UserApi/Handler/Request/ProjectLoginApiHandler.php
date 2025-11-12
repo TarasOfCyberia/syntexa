@@ -8,18 +8,18 @@ use Syntexa\Core\Attributes\AsRequestHandler;
 use Syntexa\Core\Handler\HttpHandlerInterface;
 use Syntexa\Core\Contract\RequestInterface;
 use Syntexa\Core\Contract\ResponseInterface;
-use Syntexa\Modules\UserApi\Request\ProjectLoginApiRequest;
+use Syntexa\Modules\UserApi\Overrides\Request\LoginApiRequestOverride;
 use Syntexa\User\Application\Response\LoginApiResponse;
 
 /**
  * Project-specific handler that extends module logic
  * This handler runs AFTER the module's LoginApiHandler
  */
-#[AsRequestHandler(for: ProjectLoginApiRequest::class)]
+#[AsRequestHandler(for: LoginApiRequestOverride::class)]
 class ProjectLoginApiHandler implements HttpHandlerInterface
 {
     /**
-     * @param ProjectLoginApiRequest $request
+     * @param LoginApiRequestOverride $request
      * @param LoginApiResponse $response
      * @return LoginApiResponse
      */
@@ -27,7 +27,7 @@ class ProjectLoginApiHandler implements HttpHandlerInterface
     {
         /** @var LoginApiResponse $response */
         
-        // Access extended fields from ProjectLoginApiRequest
+        // Access extended fields from LoginApiRequestOverride
         if ($request->email) {
             // Custom project logic here
             if (method_exists($response, 'setRenderContext')) {

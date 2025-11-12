@@ -11,6 +11,23 @@ use Attribute;
  * 
  * This attribute tells Syntexa that this class should be treated as a request
  * and defines the route path, methods, and other options.
+ * 
+ * You can use environment variable references in any attribute value:
+ * - `env::VAR_NAME` - reads from .env file, returns empty string if not set
+ * - `env::VAR_NAME::default_value` - reads from .env file, returns default if not set (recommended)
+ * - `env::VAR_NAME:default_value` - legacy format, also supported for backward compatibility
+ * 
+ * The double colon format (`::`) is recommended because it allows colons in default values.
+ * 
+ * Example:
+ * ```php
+ * #[AsRequest(
+ *     path: 'env::API_LOGIN_PATH::/api/login',
+ *     methods: ['POST'],
+ *     name: 'env::API_LOGIN_ROUTE_NAME::api.login',
+ *     responseWith: 'env::API_LOGIN_RESPONSE_CLASS::LoginApiResponse'
+ * )]
+ * ```
  */
 #[Attribute(Attribute::TARGET_CLASS)]
 class AsRequest

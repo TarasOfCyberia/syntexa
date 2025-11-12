@@ -8,6 +8,7 @@ use Syntexa\Core\Attributes\AsRequest;
 use Syntexa\Core\Attributes\AsRequestHandler;
 use Syntexa\Core\Attributes\AsRequestOverride;
 use Syntexa\Core\Attributes\AsResponseOverride;
+use Syntexa\Core\Config\EnvValueResolver;
 use Syntexa\Core\ModuleRegistry;
 use Syntexa\Core\IntelligentAutoloader;
 use ReflectionClass;
@@ -115,29 +116,38 @@ class AttributeDiscovery
                 if (!empty($attrs)) {
                     /** @var AsRequest $attr */
                     $attr = $attrs[0]->newInstance();
+                    
+                    // Resolve environment variable references in attribute values
+                    $path = EnvValueResolver::resolve($attr->path);
+                    $methods = EnvValueResolver::resolve($attr->methods);
+                    $name = $attr->name !== null ? EnvValueResolver::resolve($attr->name) : null;
+                    $responseWith = $attr->responseWith !== '' ? EnvValueResolver::resolve($attr->responseWith) : '';
+                    
                     self::$httpRequests[$class->getName()] = [
                         'requestClass' => $class->getName(),
-                        'path' => $attr->path,
-                        'methods' => $attr->methods,
-                        'name' => $attr->name ?? $class->getShortName(),
-                        'responseClass' => $attr->responseWith ?: null,
+                        'path' => $path,
+                        'methods' => $methods,
+                        'name' => $name ?? $class->getShortName(),
+                        'responseClass' => $responseWith ?: null,
                         'file' => $class->getFileName(),
                         'handlers' => [],
                     ];
 
                     // also index into routes for lookup by path/method
                     self::$routes[] = [
-                        'path' => $attr->path,
-                        'methods' => $attr->methods,
-                        'name' => $attr->name ?? $class->getShortName(),
+                        'path' => $path,
+                        'methods' => $methods,
+                        'name' => $name ?? $class->getShortName(),
                         'class' => $class->getName(),
                         'method' => '__invoke',
-                        'requirements' => $attr->requirements,
-                        'defaults' => $attr->defaults,
-                        'options' => $attr->options,
+                        'requirements' => EnvValueResolver::resolve($attr->requirements),
+                        'defaults' => EnvValueResolver::resolve($attr->defaults),
+                        'options' => EnvValueResolver::resolve($attr->options),
+                        'tags' => EnvValueResolver::resolve($attr->tags),
+                        'public' => $attr->public,
                         'type' => 'http-request'
                     ];
-                    echo "✅ Registered request: {$attr->path} -> {$class->getName()}\n";
+                    echo "✅ Registered request: {$path} -> {$class->getName()}\n";
                 }
             } catch (\Throwable $e) {
                 echo "⚠️  Error analyzing request {$className}: " . $e->getMessage() . "\n";
@@ -237,6 +247,22 @@ class AttributeDiscovery
                 }
                 /** @var AsRequestOverride $o */
                 $o = $attrs[0]->newInstance();
+                
+                // Auto-detect class replacement: if override class extends the target class and use is not set,
+                // automatically use the override class itself as replacement
+                if ($o->use === null) {
+                    try {
+                        $overrideReflection = new \ReflectionClass($className);
+                        $targetReflection = new \ReflectionClass($o->of);
+                        if ($overrideReflection->isSubclassOf($o->of)) {
+                            $o->use = $className;
+                            echo "🔍 Auto-detected class replacement: {$o->of} → {$className}\n";
+                        }
+                    } catch (\ReflectionException $e) {
+                        // Target class not found, skip auto-detection
+                    }
+                }
+                
                 $overrides[] = ['meta' => $o, 'file' => $file, 'class' => $className];
             } catch (\Throwable $e) {
                 echo "⚠️  Error analyzing request override {$className}: " . $e->getMessage() . "\n";
@@ -275,30 +301,60 @@ class AttributeDiscovery
                 $entry = &self::$httpRequests[$meta->use];
             }
             if ($meta->path !== null) {
-                $entry['path'] = $meta->path;
+                $entry['path'] = EnvValueResolver::resolve($meta->path);
             }
             if ($meta->methods !== null) {
-                $entry['methods'] = $meta->methods;
+                $entry['methods'] = EnvValueResolver::resolve($meta->methods);
             }
             if ($meta->name !== null) {
-                $entry['name'] = $meta->name;
+                $entry['name'] = EnvValueResolver::resolve($meta->name);
             }
             if ($meta->responseWith !== null) {
-                $entry['responseClass'] = $meta->responseWith ?: null;
+                $resolvedResponse = EnvValueResolver::resolve($meta->responseWith);
+                $entry['responseClass'] = $resolvedResponse ?: null;
+            }
+            if ($meta->requirements !== null) {
+                $entry['requirements'] = EnvValueResolver::resolve($meta->requirements);
+            }
+            if ($meta->defaults !== null) {
+                $entry['defaults'] = EnvValueResolver::resolve($meta->defaults);
+            }
+            if ($meta->options !== null) {
+                $entry['options'] = EnvValueResolver::resolve($meta->options);
+            }
+            if ($meta->tags !== null) {
+                $entry['tags'] = EnvValueResolver::resolve($meta->tags);
+            }
+            if ($meta->public !== null) {
+                $entry['public'] = $meta->public;
             }
             // Update route record referencing this request class
             foreach (self::$routes as &$route) {
                 if (($route['type'] ?? null) === 'http-request' && (($route['class'] ?? null) === ($meta->use ?? $target))) {
                     if ($meta->path !== null) {
-                        $route['path'] = $meta->path;
+                        $route['path'] = EnvValueResolver::resolve($meta->path);
                     }
                     if ($meta->methods !== null) {
-                        $route['methods'] = $meta->methods;
+                        $route['methods'] = EnvValueResolver::resolve($meta->methods);
                     }
                     if ($meta->name !== null) {
-                        $route['name'] = $meta->name;
+                        $route['name'] = EnvValueResolver::resolve($meta->name);
                     }
-                    // no change for options/defaults here; could be extended later
+                    if ($meta->requirements !== null) {
+                        $route['requirements'] = EnvValueResolver::resolve($meta->requirements);
+                    }
+                    if ($meta->defaults !== null) {
+                        $route['defaults'] = EnvValueResolver::resolve($meta->defaults);
+                    }
+                    if ($meta->options !== null) {
+                        $route['options'] = EnvValueResolver::resolve($meta->options);
+                    }
+                    if ($meta->tags !== null) {
+                        $route['tags'] = EnvValueResolver::resolve($meta->tags);
+                    }
+                    if ($meta->public !== null) {
+                        $route['public'] = $meta->public;
+                    }
                 }
             }
             echo "🔧 Overridden request {$target}: {$oldPath} -> {$entry['path']} (" . implode(',', $oldMethods) . " → " . implode(',', $entry['methods']) . ")\n";
@@ -350,16 +406,16 @@ class AttributeDiscovery
             $target = $meta->of;
             $attrs = [];
             if ($meta->handle !== null) {
-                $attrs['handle'] = $meta->handle;
+                $attrs['handle'] = EnvValueResolver::resolve($meta->handle);
             }
             if ($meta->format !== null) {
-                $attrs['format'] = $meta->format;
+                $attrs['format'] = $meta->format; // Enum, no need to resolve
             }
             if ($meta->renderer !== null) {
-                $attrs['renderer'] = $meta->renderer;
+                $attrs['renderer'] = EnvValueResolver::resolve($meta->renderer);
             }
             if ($meta->context !== null) {
-                $attrs['context'] = $meta->context;
+                $attrs['context'] = EnvValueResolver::resolve($meta->context);
             }
             if (!empty($attrs)) {
                 self::$responseAttrOverrides[$target] = $attrs;

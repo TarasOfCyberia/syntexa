@@ -130,4 +130,39 @@ readonly class Environment
     {
         return $this->appDebug;
     }
+    
+    /**
+     * Get any environment variable value (not just predefined ones)
+     * Checks .env, .env.local, and $_ENV/$_SERVER
+     * 
+     * @param string $key Environment variable name
+     * @param string|null $default Default value if not found
+     * @return string|null
+     */
+    public static function getEnvValue(string $key, ?string $default = null): ?string
+    {
+        // First check loaded .env files
+        $env = self::loadEnv();
+        if (isset($env[$key])) {
+            return $env[$key];
+        }
+        
+        // Fallback to $_ENV
+        if (isset($_ENV[$key])) {
+            return $_ENV[$key];
+        }
+        
+        // Fallback to $_SERVER
+        if (isset($_SERVER[$key])) {
+            return $_SERVER[$key];
+        }
+        
+        // Fallback to getenv()
+        $value = getenv($key);
+        if ($value !== false) {
+            return $value;
+        }
+        
+        return $default;
+    }
 }
